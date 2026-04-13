@@ -10,11 +10,15 @@ using UnityEngine;
 public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
     private static T _instance;
+    private static bool _isQuitting = false;
 
     public static T Instance
     {
         get
         {
+            // 앱이 종료 중이라면 새로운 인스턴스를 만들지 않고 null 반환
+            if (_isQuitting) return null;
+            
             if (_instance == null)
             {
                 _instance = FindAnyObjectByType<T>();
@@ -27,6 +31,18 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
             }
             return _instance;
         }
+    }
+
+    // 앱 종료 시 플래그 설정
+    protected virtual void OnApplicationQuit()
+    {
+        _isQuitting = true;
+    }
+    
+    protected virtual void OnDestroy()
+    {
+        // 에디터에서 플레이 모드를 끌 때도 안전하게 처리
+        _isQuitting = true;
     }
 
     protected virtual void Awake()

@@ -4,35 +4,39 @@ using System.Collections.Generic;
 using Ink.Runtime;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-public class DialogueManager : MonoBehaviour
+public class GameDialogueManager : MonoBehaviour
 {
     [Header("Ink")]
     [SerializeField] private TextAsset inkJSON;
     private Story story;
     
-    [Header("UI")]
+    [Header("Speaker UI Elements")]
     [SerializeField] private GameObject dialoguePanel;
     [SerializeField] private List<TextMeshProUGUI> speakerTexts;
+    [SerializeField] private List<GameObject> currentChoices = new List<GameObject>();
     //[SerializeField] private GameObject choiceButtonPrefab;
     //[SerializeField] private Transform choiceContainer;
-    private int speakerIndex = 0;
-    private string processedText;
-    private Coroutine typingCoroutine;
 
     [Header("Dialogue Settings")]
     [SerializeField] private float textSpeed = 0.05f;
+    [Range(0f, 1f)]
+    [SerializeField] private float suspicion = 0f; // 의심 수치 (0~1)
 
-    [SerializeField]private List<GameObject> currentChoices = new List<GameObject>();
+    private int speakerIndex = 0;
+    private string processedText;
+    private Coroutine typingCoroutine;
     private bool waitingForAdvance = false;
     private bool advanceRequested = false;
+    private bool skipFlag = false; // 타이핑 스킵 플래그
 
     void OnEnable()
     {
         if (PlayerInputController.Instance != null)
         {
-            PlayerInputController.Instance.Input.Player.Click.performed += ctx => HandleTap();
+            PlayerInputController.Instance.Input.Player.Click.performed += HandleTap;
         }
     }
 
@@ -40,11 +44,11 @@ public class DialogueManager : MonoBehaviour
     {
         if (PlayerInputController.Instance != null)
         {
-            PlayerInputController.Instance.Input.Player.Click.performed -= ctx => HandleTap();
+            PlayerInputController.Instance.Input.Player.Click.performed -= HandleTap;
         }
     }
 
-    private void HandleTap()
+    private void HandleTap(InputAction.CallbackContext ctx)
     {
         Debug.Log("HandleTap called");
 
@@ -57,15 +61,7 @@ public class DialogueManager : MonoBehaviour
         }
         else
         {
-            // 대화가 진행 중이지만 텍스트가 완전히 출력되지 않은 경우, 즉시 전체 텍스트 표시
-            if (typingCoroutine != null)
-            {
-                StopCoroutine(typingCoroutine);
-                typingCoroutine = null;
-                speakerTexts[speakerIndex].text = processedText;
-                waitingForAdvance = true;
-                advanceRequested = false;
-            }
+            if (typingCoroutine != null) skipFlag = true; // 타이핑 중이면 스킵 플래그 설정
         }
     }
     
@@ -121,9 +117,8 @@ public class DialogueManager : MonoBehaviour
             // 타이핑 시작
             typingCoroutine = StartCoroutine(TypeText(processedText));
 
-            // 타이핑이 끝날 때까지 OR 유저가 스킵할 때까지 대기
-            // (TypeText 내부에서 완료 시 typingCoroutine = null 처리를 해준다고 가정)
-            yield return new WaitUntil(() => typingCoroutine == null || advanceRequested);
+            // 타이핑이 끝날 때까지  대기
+            yield return typingCoroutine;
             typingCoroutine = null;
 
             waitingForAdvance = true;
@@ -145,6 +140,13 @@ public class DialogueManager : MonoBehaviour
         {
             speakerTexts[speakerIndex].text += text[i];
             yield return new WaitForSeconds(textSpeed);
+
+            if (skipFlag) 
+            {
+                skipFlag = false; // 스킵 플래그 초기화
+                speakerTexts[speakerIndex].text = text; // 전체 텍스트 즉시 표시
+                yield break; // 스킵 플래그가 설정되면 타이핑 중단
+            }
         }
     }
     

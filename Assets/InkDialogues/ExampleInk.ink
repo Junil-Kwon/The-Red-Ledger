@@ -1,75 +1,42 @@
-﻿// --- Prologue: The Meeting of Three ---
+﻿// 설정: 0 = 심문관, 1 = 포로, 2 = 통역관(주인공)
+
 # speaker: 0
-We're finally all here. Everyone, are you ready for this mission?
+"좋게 말할 때 입을 여는 게 좋을 거다. 반란군의 본거지가 어디지?"
 
 # speaker: 1
-I'm good to go. Finished checking all my gear. But hey... why has 2 been so quiet?
+"죽어도 말 못 해! ...하지만 만약 내 가족의 안전을 보장한다면, 서쪽 계곡의 폐광이라고 말해주지."
 
 # speaker: 2
-(My comrades are staring at me. How should I respond?)
+(포로는 가족의 안전을 조건으로 서쪽 계곡을 언급했다. 어떻게 전달할까?)
 
-// 3 Choices (Protagonist's reaction)
-+ [Of course I'm ready!]
+* [진실을 통역한다]
     # speaker: 2
-    Don't worry. I've never felt better.
-    # speaker: 0
-    Good. I like that energy. I knew I could count on you.
-    -> discussion
-+ [I'm a bit nervous.]
+    "가족의 안전을 보장한다면, 서쪽 계곡의 폐광이 본거지라고 합니다."
+    -> truth_route
+* [정보만 적당히 넘긴다 (절충)]
     # speaker: 2
-    To be honest, I'm a little shaky. Do you think we can pull this off?
-    # speaker: 1
-    What's wrong? That's not like you. We've got your back, don't forget that!
-    -> discussion
-+ [Just lost in thought.]
+    "가족 걱정을 하는 걸 보니 마음이 흔들리는 것 같습니다. 서쪽 근처라는 힌트를 얻었습니다."
+    -> neutral_route
+* [거짓으로 통역한다]
     # speaker: 2
-    I was just visualizing our infiltration route one more time.
-    # speaker: 0
-    Always the cautious one. Shall we take a look at the map for a final check then?
-    -> discussion
+    "전혀 협조할 생각이 없답니다. 오히려 우리를 비웃으며 동쪽 늪지대라고 거짓말을 하는군요."
+    -> lie_route
 
-=== discussion ===
-# speaker: 1
-Alright, we've reached the entrance. Who's going to take the lead from here?
-
-+ [I'll lead the way. (2)]
-    # speaker: 2
-    I'll go first. You guys cover my back.
-    # speaker: 0
-    It's going to be dangerous... Alright. Be careful, 2.
-    -> final_gate
-+ [0, you take command.]
-    # speaker: 2
-    0, your judgment is the sharpest. You open the path for us.
-    # speaker: 0
-    Trust me. I'll lead us through the safest route possible.
-    -> final_gate
-+ [I'll leave it to 1.]
-    # speaker: 2
-    1, we need your agility. Can you handle the traps?
-    # speaker: 1
-    Heh, is it finally my turn? I'll have it cleared in the blink of an eye!
-    -> final_gate
-
-=== final_gate ===
+=== truth_route ===
 # speaker: 0
-We're at the gate. Once we open this, there's no turning back. Is everyone's resolve ready?
+"가족이라... 흐음, 일리가 있군. 당장 서쪽 계곡으로 병력을 보낸다. 통역관, 수고했다."
+-> END
 
-+ [No time to hesitate.]
-    # speaker: 2
-    Let's open the gate right now. We're going to win this.
-    # speaker: 1
-    That's the 2 I know! Alright, let's go!
-    -> DONE
-+ [Let's all come back safe.]
-    # speaker: 2
-    The battle is important, but making sure no one gets hurt is my priority.
-    # speaker: 0
-    Right. We're coming back together, all three of us. That's a promise.
-    -> DONE
-+ [Wait... let me catch my breath.]
-    # speaker: 2
-    Phew... Okay. Now I'm ready. Open it!
-    # speaker: 1
-    Great, let's move out!
-    -> DONE
+=== neutral_route ===
+# speaker: 0
+"서쪽이라... 범위가 너무 넓군. 더 구체적인 장소를 알아낼 때까지 계속 심문한다."
+# speaker: 1
+"어이, 내가 말한 조건은 어떻게 된 거야? 왜 반응이 없지?"
+-> END
+
+=== lie_route ===
+# speaker: 0
+"감히 우리를 기만하려 들다니. 동쪽 늪지대는 이미 확인한 곳이다. 이놈을 고문실로 끌고 가라!"
+# speaker: 1
+"잠깐! 내 말은 그게 아니었어! 통역관! 네가 뭐라고 말한 거야?!"
+-> END

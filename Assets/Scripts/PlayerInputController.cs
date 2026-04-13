@@ -53,7 +53,7 @@ public class PlayerInputController : Singleton<PlayerInputController>
 
         // [이벤트 등록] 
         // Click 액션이 수행(performed)되었을 때만 PerformInteraction 함수를 실행해라!
-        Input.Player.Click.performed += ctx => PerformInteraction();
+        Input.Player.Click.performed += PerformInteraction;
     }
 
     private void OnEnable()
@@ -73,11 +73,19 @@ public class PlayerInputController : Singleton<PlayerInputController>
 
         List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventData, results);
-        
-        return results.Count > 0; // 결과가 하나라도 있으면 UI 위에 마우스가 있는 것
+
+        foreach (var result in results)
+        {
+            if (result.gameObject.tag != "DialogueUI")
+            {
+                return true; // UI 위에 마우스가 있는 것
+            }
+        }
+
+        return false; // UI 위에 마우스가 없는 것 (월드 공간 클릭)
     }
 
-    private void PerformInteraction()
+    private void PerformInteraction(InputAction.CallbackContext ctx)
     {
         if (IsPointerOverUI()) 
         {
