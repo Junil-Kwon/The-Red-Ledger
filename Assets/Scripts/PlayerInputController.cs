@@ -43,7 +43,13 @@ public class PlayerInputController : Singleton<PlayerInputController>
     }
     */
 
-    public PlayActions Input;
+    public enum ActionMap
+    {
+        Player,
+        MenuUI
+    }
+
+    public PlayActions Input { get; private set; }
 
     protected override void Awake()
     {
@@ -64,9 +70,28 @@ public class PlayerInputController : Singleton<PlayerInputController>
     private void OnDisable()
     {
         Input.Player.Disable();
+        Input.MenuUI.Disable();
     }
 
-    public bool IsPointerOverUI()
+    public void transitionActionMapTo(ActionMap actionMap)
+    {
+        Input.Player.Disable();
+        Input.MenuUI.Disable();
+        
+        switch (actionMap)
+        {
+            case ActionMap.Player:
+                Input.Player.Enable();
+                Input.MenuUI.Disable();
+                break;
+            case ActionMap.MenuUI:
+                Input.Player.Disable();
+                Input.MenuUI.Enable();
+                break;
+        }
+    }
+
+    public bool IsPointerOverUIWhenClick()
     {
         PointerEventData eventData = new PointerEventData(EventSystem.current);
         eventData.position = Input.Player.Point.ReadValue<Vector2>();
@@ -76,7 +101,7 @@ public class PlayerInputController : Singleton<PlayerInputController>
 
         foreach (var result in results)
         {
-            if (result.gameObject.tag != "DialogueUI")
+            if (result.gameObject.tag != "NoneFunctionalUI")
             {
                 return true; // UI 위에 마우스가 있는 것
             }
@@ -87,29 +112,24 @@ public class PlayerInputController : Singleton<PlayerInputController>
 
     private void PerformInteraction(InputAction.CallbackContext ctx)
     {
-        if (IsPointerOverUI()) 
-        {
-            // 사용자가 UI(대화창 투명 버튼 등)를 클릭함 -> 대화 넘기기
-        }
-        else 
-        {
-            // 사용자가 월드 공간을 클릭함 -> 레이캐스트로 아이템 탐색
-            Vector2 mousePosition = Input.Player.Point.ReadValue<Vector2>();
-            Debug.Log($" 클릭 감지! 좌표: {mousePosition}");
-            Ray ray = Camera.main.ScreenPointToRay(mousePosition);
+        if (IsPointerOverUIWhenClick()) return; // UI 위에서 클릭한 경우 대화 진행 방지
 
-            if (Physics.Raycast(ray, out RaycastHit hit))
+        // 사용자가 월드 공간을 클릭함 -> 레이캐스트로 아이템 탐색
+        Vector2 mousePosition = Input.Player.Point.ReadValue<Vector2>();
+        Debug.Log($" 클릭 감지! 좌표: {mousePosition}");
+        Ray ray = Camera.main.ScreenPointToRay(mousePosition);
+
+        if (Physics.Raycast(ray, out RaycastHit hit))
+        {
+            /*
+            // 맞은 물체에서 IInteractable 인터페이스를 가져옴
+            IInteractable interactable = hit.collider.GetComponent<IInteractable>();
+
+            if (interactable != null)
             {
-                /*
-                // 맞은 물체에서 IInteractable 인터페이스를 가져옴
-                IInteractable interactable = hit.collider.GetComponent<IInteractable>();
-
-                if (interactable != null)
-                {
-                    interactable.OnInteract(); // 해당 오브젝트가 구현한 로직이 알아서 실행됨!
-                }
-                */
+                interactable.OnInteract(); // 해당 오브젝트가 구현한 로직이 알아서 실행됨!
             }
+            */
         }
     }
 }

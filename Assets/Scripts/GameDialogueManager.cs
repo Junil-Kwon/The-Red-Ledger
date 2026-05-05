@@ -14,8 +14,8 @@ public class GameDialogueManager : MonoBehaviour
     private Story story;
     
     [Header("Speaker UI Elements")]
-    [SerializeField] private GameObject dialoguePanel;
-    [SerializeField] private List<TextMeshProUGUI> speakerTexts;
+    [SerializeField] private GameObject playerSpeechPanel;
+    [SerializeField] private List<GameObject> speechBubbles = new List<GameObject>();
     [SerializeField] private List<GameObject> currentChoices = new List<GameObject>();
     //[SerializeField] private GameObject choiceButtonPrefab;
     //[SerializeField] private Transform choiceContainer;
@@ -28,15 +28,16 @@ public class GameDialogueManager : MonoBehaviour
     private int speakerIndex = 0;
     private string processedText;
     private Coroutine typingCoroutine;
-    private bool waitingForAdvance = false;
-    private bool advanceRequested = false;
-    private bool skipFlag = false; // 타이핑 스킵 플래그
+    private bool diagWaitingForAdvance = false;
+    private bool diagAdvanceRequested = false;
+    private bool diagLineSkipFlag = false; // 타이핑 스킵 플래그
 
     void OnEnable()
     {
         if (PlayerInputController.Instance != null)
         {
-            PlayerInputController.Instance.Input.Player.Click.performed += HandleTap;
+            PlayerInputController.Instance.Input.Player.Click.performed += HandleClick;
+            PlayerInputController.Instance.Input.Player.Interact.performed += HandleInteract;
         }
     }
 
@@ -44,24 +45,8 @@ public class GameDialogueManager : MonoBehaviour
     {
         if (PlayerInputController.Instance != null)
         {
-            PlayerInputController.Instance.Input.Player.Click.performed -= HandleTap;
-        }
-    }
-
-    private void HandleTap(InputAction.CallbackContext ctx)
-    {
-        Debug.Log("HandleTap called");
-
-        if (PlayerInputController.Instance.IsPointerOverUI())
-            return; // UI 위에서 클릭한 경우 대화 진행 방지
-
-        if (waitingForAdvance)
-        {
-            advanceRequested = true;
-        }
-        else
-        {
-            if (typingCoroutine != null) skipFlag = true; // 타이핑 중이면 스킵 플래그 설정
+            PlayerInputController.Instance.Input.Player.Click.performed -= HandleClick;
+            PlayerInputController.Instance.Input.Player.Interact.performed -= HandleInteract;
         }
     }
     
@@ -69,6 +54,48 @@ public class GameDialogueManager : MonoBehaviour
     {
         InitializeStory();
         StartDialogue();
+    }
+
+    // =================== 입력 methods ===================
+    private void HandleClick(InputAction.CallbackContext ctx)
+    {
+        Debug.Log("HandleClick called");
+
+        if (PlayerInputController.Instance.IsPointerOverUIWhenClick())
+            return; // UI 위에서 클릭한 경우 대화 진행 방지
+
+        skipLine(diagWaitingForAdvance);
+    }
+
+    private void HandleInteract(InputAction.CallbackContext ctx)
+    {
+        Debug.Log("HandleInteraction called");
+
+        switch(ctx.control.displayName)
+        {
+            case "Space":
+            case "Enter":
+                skipLine(diagWaitingForAdvance);
+                break;
+            default:
+                // 다른 상호작용 키에 대한 처리 (예: E키로 대화 시작 등)
+                break;
+        }
+        
+    }
+
+    // =================== 대화 시스템 methods ===================
+
+    void skipLine(bool diagWaitingForAdvance)
+    {
+        if (diagWaitingForAdvance)
+        {
+            diagAdvanceRequested = true;
+        }
+        else
+        {
+            if (typingCoroutine != null) diagLineSkipFlag = true; // 타이핑 중이면 스킵 플래그 설정
+        }
     }
     
     void InitializeStory()
@@ -99,9 +126,9 @@ public class GameDialogueManager : MonoBehaviour
     
     public void StartDialogue()
     {
-        waitingForAdvance = false;
-        advanceRequested = false;
-        dialoguePanel.SetActive(true);
+        diagWaitingForAdvance = false;
+        diagAdvanceRequested = false;
+        playerSpeechPanel.SetActive(true);
         StartCoroutine(ContinueStory());
     }
     
@@ -121,11 +148,11 @@ public class GameDialogueManager : MonoBehaviour
             yield return typingCoroutine;
             typingCoroutine = null;
 
-            waitingForAdvance = true;
-            advanceRequested = false;
-            yield return new WaitUntil(() => advanceRequested);
-            waitingForAdvance = false;
-            advanceRequested = false;
+            diagWaitingForAdvance = true;
+            diagAdvanceRequested = false;
+            yield return new WaitUntil(() => diagAdvanceRequested);
+            diagWaitingForAdvance = false;
+            diagAdvanceRequested = false;
         }
         
         // 선택지 표시
@@ -134,17 +161,22 @@ public class GameDialogueManager : MonoBehaviour
 
     IEnumerator TypeText(string text)
     {
-        speakerTexts[speakerIndex].text = "";
+        SpeechBubble bubble = speechBubbles[speakerIndex].GetComponent<SpeechBubble>();
+        bubble.BubbleInit(); // 버블 초기화
+        TextMeshProUGUI speakerText = speechBubbles[speakerIndex].GetComponentInChildren<TextMeshProUGUI>();
 
         for (int i = 0; i < text.Length; i++)
         {
-            speakerTexts[speakerIndex].text += text[i];
+            speakerText.text += text[i];
+            bubble.CheckLineBreak(); // 줄 바꿈 체크
+
             yield return new WaitForSeconds(textSpeed);
 
-            if (skipFlag) 
+            if (diagLineSkipFlag) 
             {
-                skipFlag = false; // 스킵 플래그 초기화
-                speakerTexts[speakerIndex].text = text; // 전체 텍스트 즉시 표시
+                diagLineSkipFlag = false; // 스킵 플래그 초기화
+                bubble.LineBreak(); // 줄 바꿈 강제 적용
+                speakerText.text = text; // 대사 출력 스킵
                 yield break; // 스킵 플래그가 설정되면 타이핑 중단
             }
         }
@@ -191,6 +223,7 @@ public class GameDialogueManager : MonoBehaviour
         {
             int choiceIndex = choice.index;
             //GameObject choiceButton = Instantiate(choiceButtonPrefab, choiceContainer);
+            // NOTE: 버튼이 3개를 넘지 않는다는 가정하의 코드
             currentChoices[choiceIndex].GetComponentInChildren<TextMeshProUGUI>().text = choice.text;
             
             currentChoices[choiceIndex].GetComponent<Button>().onClick.AddListener(() => {
@@ -210,8 +243,8 @@ public class GameDialogueManager : MonoBehaviour
     
     void OnChoiceSelected(int choiceIndex)
     {
-        waitingForAdvance = false;
-        advanceRequested = false;
+        diagWaitingForAdvance = false;
+        diagAdvanceRequested = false;
         story.ChooseChoiceIndex(choiceIndex);
         StartCoroutine(ContinueStory());
 
@@ -225,6 +258,7 @@ public class GameDialogueManager : MonoBehaviour
             //Destroy(choice);
             choice.SetActive(false);
             choice.GetComponent<Button>().onClick.RemoveAllListeners();
+
         }
         //currentChoices.Clear();
         
@@ -232,13 +266,13 @@ public class GameDialogueManager : MonoBehaviour
     
     void EndDialogue()
     {
-        dialoguePanel.SetActive(false);
+        playerSpeechPanel.SetActive(false);
     }
     
     public void JumpToKnot(string knotName)
     {
-        waitingForAdvance = false;
-        advanceRequested = false;
+        diagWaitingForAdvance = false;
+        diagAdvanceRequested = false;
         story.ChoosePathString(knotName);
         StartCoroutine(ContinueStory());
     }

@@ -1,6 +1,6 @@
 ﻿<Solution>
-  <Project Path="InkEditor.csproj" />
   <Project Path="Ink-Libraries.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="InkEditor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>
