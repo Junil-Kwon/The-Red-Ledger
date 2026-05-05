@@ -79,6 +79,10 @@ public class GameDialogueManager : MonoBehaviour
                 break;
             default:
                 // 다른 상호작용 키에 대한 처리 (예: E키로 대화 시작 등)
+            case "1":
+            case "2":
+            case "3":
+                ChooseChoiceByKey(ctx.control.displayName);
                 break;
         }
         
@@ -96,6 +100,22 @@ public class GameDialogueManager : MonoBehaviour
         {
             if (typingCoroutine != null) diagLineSkipFlag = true; // 타이핑 중이면 스킵 플래그 설정
         }
+    }
+
+    void ChooseChoiceByKey(string key)
+    {
+        int choiceIndex = key switch
+        {
+            "1" => 0,
+            "2" => 1,
+            "3" => 2,
+            _ => -1
+        };
+
+        if (!currentChoices[choiceIndex].activeSelf) // 쿨타임이 있다면 수정 필요
+            return; // 대화 진행 중이 아니면 선택지 입력 무시
+
+        currentChoices[choiceIndex].GetComponent<Button>().onClick.Invoke(); // 해당 선택지 버튼의 클릭 이벤트 강제 호출
     }
     
     void InitializeStory()
