@@ -6,6 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using StoryFlags; // StoryFlag enum이 정의된 네임스페이스를 임포트
 
 public class GameDialogueManager : MonoBehaviour
 {
@@ -22,15 +23,16 @@ public class GameDialogueManager : MonoBehaviour
 
     [Header("Dialogue Settings")]
     [SerializeField] private float textSpeed = 0.05f;
-    [Range(0f, 1f)]
-    [SerializeField] private float suspicion = 0f; // 의심 수치 (0~1)
 
     private int speakerIndex = 0;
+    private Color textColor = Color.black;
     private string processedText;
     private Coroutine typingCoroutine;
     private bool diagWaitingForAdvance = false;
     private bool diagAdvanceRequested = false;
     private bool diagLineSkipFlag = false; // 타이핑 스킵 플래그
+
+    //private GameStatusManager gameStatusManager;
 
     void OnEnable()
     {
@@ -48,6 +50,11 @@ public class GameDialogueManager : MonoBehaviour
             PlayerInputController.Instance.Input.Player.Click.performed -= HandleClick;
             PlayerInputController.Instance.Input.Player.Interact.performed -= HandleInteract;
         }
+    }
+
+    void Awake()
+    {
+        //gameStatusManager = FindAnyObjectByType<GameStatusManager>();
     }
     
     void Start()
@@ -77,30 +84,19 @@ public class GameDialogueManager : MonoBehaviour
             case "Enter":
                 skipLine(diagWaitingForAdvance);
                 break;
-            default:
-                // 다른 상호작용 키에 대한 처리 (예: E키로 대화 시작 등)
             case "1":
             case "2":
             case "3":
                 ChooseChoiceByKey(ctx.control.displayName);
+                break;
+            default:
+                // 다른 상호작용 키에 대한 처리 (예: E키로 대화 시작 등)
                 break;
         }
         
     }
 
     // =================== 대화 시스템 methods ===================
-
-    void skipLine(bool diagWaitingForAdvance)
-    {
-        if (diagWaitingForAdvance)
-        {
-            diagAdvanceRequested = true;
-        }
-        else
-        {
-            if (typingCoroutine != null) diagLineSkipFlag = true; // 타이핑 중이면 스킵 플래그 설정
-        }
-    }
 
     void ChooseChoiceByKey(string key)
     {
@@ -135,12 +131,67 @@ public class GameDialogueManager : MonoBehaviour
     
     void BindExternalFunctions()
     {
-        story.BindExternalFunction("PlaySound", (string soundName) => {
-            // 유니티 내부에서의 사운드 재생 로직
+        
+        story.BindExternalFunction("PlayBGM", (string BGMName) => {
+            if (Enum.TryParse(BGMName, true, out EBgm bgmType))
+            {
+                SoundManager.Instance.PlayBGM(bgmType);
+            }
+            else
+            {
+                Debug.LogError($"Ink에서 잘못된 BGM 이름을 보냈습니다: {BGMName}");
+            }
+        });
+
+        story.BindExternalFunction("PlaySFX", (string SFXName) => {
+            if (Enum.TryParse(SFXName, true, out ESfx sfxType))
+            {
+                SoundManager.Instance.PlaySFX(sfxType);
+            }
+            else
+            {
+                Debug.LogError($"Ink에서 잘못된 SFX 이름을 보냈습니다: {SFXName}");
+            }
         });
         
-        story.BindExternalFunction("ChangeScene", (string sceneName) => {
-            // 유니티 내부에서의 씬 전환 로직
+        story.BindExternalFunction("UpdateStatus", (int value) => {
+            //gameStatusManager?.UpdateStatus(value);
+        });
+
+        story.BindExternalFunction("AddIntel", (int points) => {
+            // gameStatusManager?.AddIntel(points);
+        });
+
+        story.BindExternalFunction("AddCreativeFlagPoint", () => {
+            // gameStatusManager?.AddCreativeFlagPoint();
+        });
+
+        story.BindExternalFunction("TriggerStoryFlag", (string flag) => {
+            if (Enum.TryParse(flag, true, out EStoryFlag storyFlag))
+            {
+                DataManager.Instance.TriggerStoryFlag(storyFlag);
+            }
+            else
+            {
+                Debug.LogError($"Ink에서 잘못된 스토리 플래그를 보냈습니다: {storyFlag}");
+            }
+        });
+
+        story.BindExternalFunction("GetObjectiveState", () => {
+            //return gameStatusManager? gameStatusManager.GetObjectiveState() : 0;
+        });
+
+        story.BindExternalFunction("ShowSystemNotify", (string action) => {
+            /*
+            if (Enum.TryParse(action, true, out  ENotifyType notifyType))
+            {
+                //SystemNotifyManager.Instance.ShowNotification(notifyType);
+            }
+            else
+            {
+                Debug.LogError($"Ink에서 잘못된 시스템 알림 액션을 보냈습니다: {action}");
+            }
+            */
         });
     }
     
@@ -179,27 +230,44 @@ public class GameDialogueManager : MonoBehaviour
         DisplayChoices();
     }
 
+    void skipLine(bool diagWaitingForAdvance)
+    {
+        if (diagWaitingForAdvance)
+        {
+            diagAdvanceRequested = true;
+        }
+        else
+        {
+            if (typingCoroutine != null) diagLineSkipFlag = true; // 타이핑 중이면 스킵 플래그 설정
+        }
+    }
+
     IEnumerator TypeText(string text)
     {
         SpeechBubble bubble = speechBubbles[speakerIndex].GetComponent<SpeechBubble>();
         bubble.BubbleInit(); // 버블 초기화
         TextMeshProUGUI speakerText = speechBubbles[speakerIndex].GetComponentInChildren<TextMeshProUGUI>();
+        string tmpText = ""; // 임시 텍스트 변수 초기화
+        speakerText.color = textColor; // 텍스트 색상 적용
 
         for (int i = 0; i < text.Length; i++)
         {
-            speakerText.text += text[i];
-            bubble.CheckLineBreak(); // 줄 바꿈 체크
+            tmpText += text[i];
+            bubble.UpdateBubble(tmpText); // 줄 바꿈 체크
 
             yield return new WaitForSeconds(textSpeed);
 
             if (diagLineSkipFlag) 
             {
                 diagLineSkipFlag = false; // 스킵 플래그 초기화
-                bubble.LineBreak(); // 줄 바꿈 강제 적용
-                speakerText.text = text; // 대사 출력 스킵
+                tmpText = text; // 대사 출력 스킵
+                bubble.UpdateBubble(tmpText); // 줄 바꿈 체크
+                textColor = Color.black; // 텍스트 색상 초기화
                 yield break; // 스킵 플래그가 설정되면 타이핑 중단
             }
         }
+
+        textColor = Color.black; // 텍스트 색상 초기화
     }
     
     void ProcessTags(List<string> tags)
@@ -213,12 +281,12 @@ public class GameDialogueManager : MonoBehaviour
                 string value = parts[1].Trim();
                 
                 // 태그 처리 로직
-                HandleTag(key, value, ref speakerIndex);
+                HandleTag(key, value);
             }
         }
     }
     
-    void HandleTag(string key, string value, ref int speakerIndex)
+    void HandleTag(string key, string value)
     {
         switch (key)
         {
@@ -229,8 +297,20 @@ public class GameDialogueManager : MonoBehaviour
             case "emotion":
                 // 표정 변경
                 break;
-            case "audio":
-                // 오디오 재생
+            case "language":
+                // 대사 색상 변경
+                switch(value)
+                {
+                    case "Osten":
+                        textColor = Color.red;
+                        break;
+                    case "Valeska":
+                        textColor = Color.blue;
+                        break;
+                    default:
+                        textColor = Color.black; // 기본 색상
+                        break;
+                }
                 break;
         }
     }

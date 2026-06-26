@@ -1,6 +1,9 @@
 ﻿<Solution>
+  <Project Path="Unity.ShaderGraph.Editor.csproj" />
   <Project Path="Ink-Libraries.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="InkEditor.csproj" />
+  <Project Path="Unity.UI.Shaders.Sample.Editor.csproj" />
+  <Project Path="Unity.UI.Shaders.Sample.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
 </Solution>

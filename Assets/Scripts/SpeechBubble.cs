@@ -8,22 +8,19 @@ public class SpeechBubble : MonoBehaviour
     [SerializeField] private bool isStretchable = true;
     private TextMeshProUGUI textMeshPro;
 
-    public void CheckLineBreak()
+    public void UpdateBubble(string text)
     {
+        textMeshPro.text = text; // 임시 텍스트 설정
         if (!isStretchable) return; // 줄 바꿈 체크 비활성화된 경우 무시
 
-        float currentWidth = textMeshPro.rectTransform.sizeDelta.x;
+        //textMeshPro.CalculateLayoutInputHorizontal();
+        float currentWidth = textMeshPro.preferredWidth;
         if (currentWidth > maxWidth)
         {
             textMeshPro.GetComponent<LayoutElement>().preferredWidth = maxWidth; // preferredWidth 설정
+
+            //LayoutRebuilder.ForceRebuildLayoutImmediate(GetComponent<RectTransform>());
         }
-    }
-
-    public void LineBreak()
-    {
-        if (!isStretchable) return; // 줄 바꿈 체크 비활성화된 경우 무시
-
-        textMeshPro.GetComponent<LayoutElement>().preferredWidth = maxWidth; // preferredWidth 설정
     }
 
     public void BubbleInit()

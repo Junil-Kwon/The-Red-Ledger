@@ -177,7 +177,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: I don't know anything.
+  m_text: '
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: f64a308aaf5f07140a09649a2e187164, type: 2}
   m_sharedMaterial: {fileID: -3879802003394196660, guid: f64a308aaf5f07140a09649a2e187164, type: 2}
@@ -545,7 +547,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d67537add07ff4fae8d15115c13da1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogueManager
-  inkJSON: {fileID: 4900000, guid: cfe0707bda6f59d49a78a3c98d227f6a, type: 3}
+  inkJSON: {fileID: 4900000, guid: 2029a573c81196b4f97ca606ded3962d, type: 3}
   playerSpeechPanel: {fileID: 2007133826}
   speechBubbles:
   - {fileID: 809800860}
@@ -556,7 +558,6 @@ MonoBehaviour:
   - {fileID: 1750367557}
   - {fileID: 58495520}
   textSpeed: 0.05
-  suspicion: 0
 --- !u!4 &269642012
 Transform:
   m_ObjectHideFlags: 0
@@ -1141,7 +1142,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: I will kill you if you lie.
+  m_text: '
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: f64a308aaf5f07140a09649a2e187164, type: 2}
   m_sharedMaterial: {fileID: -3879802003394196660, guid: f64a308aaf5f07140a09649a2e187164, type: 2}
@@ -2499,6 +2502,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1283780754}
   - component: {fileID: 1283780753}
+  - component: {fileID: 1283780755}
   m_Layer: 0
   m_Name: Desk
   m_TagString: Untagged
@@ -2580,6 +2584,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1283780755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1283780752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 102789853e1b7d54092cd4caf263d5aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DataManager
 --- !u!1 &1342096377
 GameObject:
   m_ObjectHideFlags: 0
@@ -3448,7 +3464,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abc4be0521a2d134d98b57a79c587c3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SpeechBubble
-  maxWidth: 0
+  maxWidth: 1000
   isStretchable: 0
 --- !u!1 &2068833640
 GameObject:

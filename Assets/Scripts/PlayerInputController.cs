@@ -49,46 +49,55 @@ public class PlayerInputController : Singleton<PlayerInputController>
         MenuUI
     }
 
-    public PlayActions Input { get; private set; }
+    //private Texture2D crosshair;
 
-    protected override void Awake()
+    public PlayActions Input { get; private set; }
+    public InputActionMap CurrentActionMap { get; private set; }
+
+    private void InitializeInput()
     {
-        base.Awake();
+        if (Input != null) Input.Dispose();
         
         Input = new PlayActions();
-
-        // [이벤트 등록] 
-        // Click 액션이 수행(performed)되었을 때만 PerformInteraction 함수를 실행해라!
-        Input.Player.Click.performed += PerformInteraction;
+        SwitchActionMap(ActionMap.Player); // 시작은 Player 맵으로
     }
 
-    private void OnEnable()
+    public void SwitchActionMap(ActionMap actionMap)
     {
-        Input.Player.Enable();
-    }
+        if (Input == null) return;
+        if (CurrentActionMap != null && CurrentActionMap.name == actionMap.ToString()) return; // 이미 해당 액션 맵이 활성화되어 있다면 중복 실행 방지
 
-    private void OnDisable()
-    {
-        Input.Player.Disable();
-        Input.MenuUI.Disable();
-    }
-
-    public void transitionActionMapTo(ActionMap actionMap)
-    {
-        Input.Player.Disable();
-        Input.MenuUI.Disable();
         
+        CurrentActionMap?.Disable(); // 현재 활성화된 액션 맵 비활성화
+
         switch (actionMap)
         {
             case ActionMap.Player:
                 Input.Player.Enable();
-                Input.MenuUI.Disable();
+                CurrentActionMap = Input.Player;
+
+                /*
+                // ★ Resources.Load는 최초 1회만 실행되도록 캐싱 처리
+                if (crosshair == null)
+                {
+                    crosshair = Resources.Load<Texture2D>("Crosshair");
+                }
+                
+                if (crosshair != null)
+                {
+                    Cursor.SetCursor(crosshair, new Vector2(crosshair.width / 2f, crosshair.height / 2f), CursorMode.Auto);
+                }
+                */
                 break;
+
             case ActionMap.MenuUI:
-                Input.Player.Disable();
                 Input.MenuUI.Enable();
+                CurrentActionMap = Input.MenuUI;
+                Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto); // 기본 커서로 변경
                 break;
         }
+        
+        Debug.Log($"[InputManager] 액션 맵 전환 완료: {actionMap}");
     }
 
     public bool IsPointerOverUIWhenClick()
@@ -110,6 +119,7 @@ public class PlayerInputController : Singleton<PlayerInputController>
         return false; // UI 위에 마우스가 없는 것 (월드 공간 클릭)
     }
 
+    // 월드 공간 클릭 시 상호작용 수행
     private void PerformInteraction(InputAction.CallbackContext ctx)
     {
         if (IsPointerOverUIWhenClick()) return; // UI 위에서 클릭한 경우 대화 진행 방지
@@ -131,5 +141,32 @@ public class PlayerInputController : Singleton<PlayerInputController>
             }
             */
         }
+    }
+
+    // ============== Lifecycle Methods ==============
+    protected override void Awake()
+    {
+        base.Awake();
+
+        // 상위 싱글톤에서 중복으로 판정되어 내가 Instance가 아니라면 
+        // 아래 코드를 실행하지 말고 즉시 함수를 빠져나갑니다.
+        //if (Instance != this) return;
+        
+        InitializeInput();
+
+        // [이벤트 등록] 
+        // Click 액션이 수행(performed)되었을 때만 PerformInteraction 함수를 실행해라!
+        Input.Player.Click.performed += PerformInteraction;
+    }
+
+    private void OnEnable()
+    {
+        //Input.Player.Enable();
+    }
+
+    private void OnDisable()
+    {
+        //Input.Player.Disable();
+        //Input.MenuUI.Disable();
     }
 }
