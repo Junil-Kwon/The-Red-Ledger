@@ -25,7 +25,7 @@ public class GameDialogueManager : MonoBehaviour
     [SerializeField] private float textSpeed = 0.05f;
 
     private int speakerIndex = 0;
-    private Color textColor = Color.black;
+    private Color nextTextColor = Color.black;
     private string processedText;
     private Coroutine typingCoroutine;
     private bool diagWaitingForAdvance = false;
@@ -66,7 +66,7 @@ public class GameDialogueManager : MonoBehaviour
     // =================== 입력 methods ===================
     private void HandleClick(InputAction.CallbackContext ctx)
     {
-        Debug.Log("HandleClick called");
+        //Debug.Log("HandleClick called");
 
         if (PlayerInputController.Instance.IsPointerOverUIWhenClick())
             return; // UI 위에서 클릭한 경우 대화 진행 방지
@@ -76,7 +76,7 @@ public class GameDialogueManager : MonoBehaviour
 
     private void HandleInteract(InputAction.CallbackContext ctx)
     {
-        Debug.Log("HandleInteraction called");
+        //Debug.Log("HandleInteraction called");
 
         switch(ctx.control.displayName)
         {
@@ -133,6 +133,8 @@ public class GameDialogueManager : MonoBehaviour
     {
         
         story.BindExternalFunction("PlayBGM", (string BGMName) => {
+            Debug.Log($"PlayBGM called with: {BGMName}");
+            /*
             if (Enum.TryParse(BGMName, true, out EBgm bgmType))
             {
                 SoundManager.Instance.PlayBGM(bgmType);
@@ -141,9 +143,12 @@ public class GameDialogueManager : MonoBehaviour
             {
                 Debug.LogError($"Ink에서 잘못된 BGM 이름을 보냈습니다: {BGMName}");
             }
+            */
         });
 
         story.BindExternalFunction("PlaySFX", (string SFXName) => {
+            Debug.Log($"PlaySFX called with: {SFXName}");
+            /*
             if (Enum.TryParse(SFXName, true, out ESfx sfxType))
             {
                 SoundManager.Instance.PlaySFX(sfxType);
@@ -152,21 +157,27 @@ public class GameDialogueManager : MonoBehaviour
             {
                 Debug.LogError($"Ink에서 잘못된 SFX 이름을 보냈습니다: {SFXName}");
             }
+            */
         });
         
         story.BindExternalFunction("UpdateStatus", (int value) => {
+            Debug.Log($"UpdateStatus called with: {value}");
             //gameStatusManager?.UpdateStatus(value);
         });
 
         story.BindExternalFunction("AddIntel", (int points) => {
+            Debug.Log($"AddIntel called with: {points}");
             // gameStatusManager?.AddIntel(points);
         });
 
         story.BindExternalFunction("AddCreativeFlagPoint", () => {
+            Debug.Log("AddCreativeFlagPoint called");
             // gameStatusManager?.AddCreativeFlagPoint();
         });
 
         story.BindExternalFunction("TriggerStoryFlag", (string flag) => {
+            Debug.Log($"TriggerStoryFlag called with: {flag}");
+            /*
             if (Enum.TryParse(flag, true, out EStoryFlag storyFlag))
             {
                 DataManager.Instance.TriggerStoryFlag(storyFlag);
@@ -175,13 +186,16 @@ public class GameDialogueManager : MonoBehaviour
             {
                 Debug.LogError($"Ink에서 잘못된 스토리 플래그를 보냈습니다: {storyFlag}");
             }
+            */
         });
 
         story.BindExternalFunction("GetObjectiveState", () => {
+            return "YELLOW"; // 임시 반환값, 실제로는 gameStatusManager에서 상태를 가져와야 함
             //return gameStatusManager? gameStatusManager.GetObjectiveState() : 0;
         });
 
-        story.BindExternalFunction("ShowSystemNotify", (string action) => {
+        story.BindExternalFunction("SystemNotify", (string action) => {
+            Debug.Log($"SystemNotify called with: {action}");
             /*
             if (Enum.TryParse(action, true, out  ENotifyType notifyType))
             {
@@ -210,6 +224,13 @@ public class GameDialogueManager : MonoBehaviour
         {
             string text = story.Continue();
             processedText = text.Trim();
+
+            // ⭐ [수정된 부분] 빈 문자열(엔터 등)일 경우 클릭 대기를 건너뛰고 바로 다음으로 진행
+            if (string.IsNullOrEmpty(processedText))
+            {
+                continue; 
+            }
+
             ProcessTags(story.currentTags);
 
             // 타이핑 시작
@@ -248,7 +269,7 @@ public class GameDialogueManager : MonoBehaviour
         bubble.BubbleInit(); // 버블 초기화
         TextMeshProUGUI speakerText = speechBubbles[speakerIndex].GetComponentInChildren<TextMeshProUGUI>();
         string tmpText = ""; // 임시 텍스트 변수 초기화
-        speakerText.color = textColor; // 텍스트 색상 적용
+        speakerText.color = nextTextColor; // 텍스트 색상 적용
 
         for (int i = 0; i < text.Length; i++)
         {
@@ -262,16 +283,18 @@ public class GameDialogueManager : MonoBehaviour
                 diagLineSkipFlag = false; // 스킵 플래그 초기화
                 tmpText = text; // 대사 출력 스킵
                 bubble.UpdateBubble(tmpText); // 줄 바꿈 체크
-                textColor = Color.black; // 텍스트 색상 초기화
+                nextTextColor = Color.black; // 텍스트 색상 초기화
                 yield break; // 스킵 플래그가 설정되면 타이핑 중단
             }
         }
 
-        textColor = Color.black; // 텍스트 색상 초기화
+        nextTextColor = Color.black; // 텍스트 색상 초기화
     }
     
     void ProcessTags(List<string> tags)
     {
+        if (tags == null) return;
+
         foreach (string tag in tags)
         {
             string[] parts = tag.Split(':');
@@ -302,13 +325,13 @@ public class GameDialogueManager : MonoBehaviour
                 switch(value)
                 {
                     case "Osten":
-                        textColor = Color.red;
+                        nextTextColor = Color.red;
                         break;
                     case "Valeska":
-                        textColor = Color.blue;
+                        nextTextColor = Color.blue;
                         break;
                     default:
-                        textColor = Color.black; // 기본 색상
+                        nextTextColor = Color.black; // 기본 색상
                         break;
                 }
                 break;
@@ -324,14 +347,21 @@ public class GameDialogueManager : MonoBehaviour
             int choiceIndex = choice.index;
             //GameObject choiceButton = Instantiate(choiceButtonPrefab, choiceContainer);
             // NOTE: 버튼이 3개를 넘지 않는다는 가정하의 코드
-            currentChoices[choiceIndex].GetComponentInChildren<TextMeshProUGUI>().text = choice.text;
-            
-            currentChoices[choiceIndex].GetComponent<Button>().onClick.AddListener(() => {
+            ProcessTags(choice.tags);
+
+            ChoiceButton choicebtn = currentChoices[choiceIndex].GetComponent<ChoiceButton>();
+            choicebtn.gameObject.SetActive(true);
+
+            choicebtn.SetText(choice.text);
+            choicebtn.SetTextColor(nextTextColor);
+
+            choicebtn.GetComponent<Button>().onClick.AddListener(() => {
                 OnChoiceSelected(choiceIndex);
             });
             
             //currentChoices.Add(choiceButton);
-            currentChoices[choiceIndex].SetActive(true);
+            
+            nextTextColor = Color.black; // 텍스트 색상 초기화
         }
         
         if (story.currentChoices.Count == 0)

@@ -3,19 +3,26 @@ using UnityEngine;
 
 public class ChoiceTMPEffect : MonoBehaviour
 {
-    [Header("Text Wobble Settings")]
-    public float WobbleSpeed = 2f; 
-    public float WobbleIntensity = 4f;
-    public float MinIntensity = 0.2f; 
+    [Header("Tremble Settings")]
+    [Tooltip("숫자가 클수록 파르르 빠르게 떪 (추천: 30 ~ 50)")]
+    public float TrembleSpeed = 40f;      
+
+    [Tooltip("글자가 흔들리는 최대 반경 (추천: 1.5 ~ 3)")]
+    public float TrembleIntensity = 2f;  
 
     private TMP_Text textMesh;
     private Mesh mesh;
     private Vector3[] vertices;
 
-    // 개별 글자의 떨림 벡터 계산
-    Vector2 Wobble(float currentIntensity)
+    // 연속적이면서도 무작위적인 진동 오프셋 계산
+    Vector2 GetTrembleOffset(float timeValue, int characterIndex)
     {
-        return Random.insideUnitCircle * currentIntensity;
+        // Perlin 노이즈를 활용해 흐르듯 끊기지 않는 진동을 만듭니다.
+        // characterIndex를 섞어주어 모든 글자가 제각각 따로 떨리게 합니다.
+        float x = Mathf.PerlinNoise(timeValue + characterIndex * 0.7f, 0f) * 2f - 1f;
+        float y = Mathf.PerlinNoise(0f, timeValue + characterIndex * 0.7f) * 2f - 1f;
+        
+        return new Vector2(x, y) * TrembleIntensity;
     }
 
     void Start()
@@ -30,24 +37,21 @@ public class ChoiceTMPEffect : MonoBehaviour
         mesh = textMesh.mesh;
         vertices = mesh.vertices;
 
-        // --- 1. 전체에 적용될 강도 파동(Intensity Cycle) 계산 ---
-        // Sine파를 0~1 사이 값으로 변환하여 사용합니다.
-        float rawSine = Mathf.Sin(Time.time * WobbleSpeed); // -1 ~ 1
-        float intensityCycle = Mathf.Lerp(MinIntensity, 1f, (rawSine + 1f) / 2f);
-        float dynamicIntensity = WobbleIntensity * intensityCycle;
+        // 시간에 속도를 곱해 멈추지 않는 빠른 시간 축을 생성
+        float timeValue = Time.time * TrembleSpeed;
 
         for (int i = 0; i < textInfo.characterCount; i++)
         {
             TMP_CharacterInfo charInfo = textInfo.characterInfo[i];
 
+            // 공백이나 줄바꿈 문자는 패스
             if (!charInfo.isVisible) continue;
 
             int vertexIndex = charInfo.vertexIndex;
 
-            // --- 2. 오프셋 계산 ---
-            Vector3 offset = Wobble(dynamicIntensity);
+            // 매 프레임 글자별 고유 오프셋을 일정 강도로 적용
+            Vector3 offset = GetTrembleOffset(timeValue, i);
             
-
             vertices[vertexIndex + 0] += offset;
             vertices[vertexIndex + 1] += offset;
             vertices[vertexIndex + 2] += offset;
