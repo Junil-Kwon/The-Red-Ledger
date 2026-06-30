@@ -543,7 +543,7 @@ GameObject:
   - component: {fileID: 269642012}
   - component: {fileID: 269642011}
   m_Layer: 0
-  m_Name: GameDialogueManager
+  m_Name: DialogueManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -561,17 +561,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98d67537add07ff4fae8d15115c13da1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogueManager
-  inkJSON: {fileID: 4900000, guid: 2029a573c81196b4f97ca606ded3962d, type: 3}
-  playerSpeechPanel: {fileID: 2007133826}
-  speechBubbles:
+  _inkJSON: {fileID: 4900000, guid: 2029a573c81196b4f97ca606ded3962d, type: 3}
+  _playerSpeechPanel: {fileID: 2007133826}
+  _speechBubbles:
   - {fileID: 809800860}
   - {fileID: 761124275}
   - {fileID: 2007133826}
-  currentChoices:
+  _currentChoices:
   - {fileID: 791448774}
   - {fileID: 1750367557}
   - {fileID: 58495520}
-  textSpeed: 0.05
+  _textSpeed: 0.05
 --- !u!4 &269642012
 Transform:
   m_ObjectHideFlags: 0
@@ -2600,7 +2600,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1283780754}
   - component: {fileID: 1283780753}
-  - component: {fileID: 1283780755}
   m_Layer: 0
   m_Name: Desk
   m_TagString: Untagged
@@ -2682,18 +2681,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1283780755
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1283780752}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 102789853e1b7d54092cd4caf263d5aa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DataManager
 --- !u!1 &1342096377
 GameObject:
   m_ObjectHideFlags: 0
@@ -3058,6 +3045,50 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 761124276}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1517072615
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1517072617}
+  - component: {fileID: 1517072616}
+  m_Layer: 0
+  m_Name: DataManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1517072616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1517072615}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 102789853e1b7d54092cd4caf263d5aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DataManager
+--- !u!4 &1517072617
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1517072615}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1350.3038, y: 907.91943, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1691970381
@@ -3514,7 +3545,7 @@ GameObject:
   - component: {fileID: 2068833641}
   - component: {fileID: 2068833643}
   m_Layer: 0
-  m_Name: PlayerInputController
+  m_Name: PlayerInputManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4012,6 +4043,7 @@ SceneRoots:
   - {fileID: 889946400}
   - {fileID: 2068833642}
   - {fileID: 269642012}
+  - {fileID: 1517072617}
   - {fileID: 1426878330}
   - {fileID: 1113829303}
   - {fileID: 1196862926}

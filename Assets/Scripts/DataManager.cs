@@ -14,13 +14,18 @@ public class GameSettings
 [System.Serializable]
 public class GameSaveData
 {
-    [SerializeField] private HashSet<EStoryFlag> storyFlags = new HashSet<EStoryFlag>();
+    // HashSet 대신 JsonUtility가 인식할 수 있는 List로 변경: HashSet은 JsonUtility에서 직렬화되지 않으므로 List로 변경
+    [SerializeField] private List<EStoryFlag> storyFlags = new List<EStoryFlag>();
 
-    public HashSet<EStoryFlag> StoryFlags => storyFlags;
+    public List<EStoryFlag> StoryFlags => storyFlags;
 
     public void AddStoryFlag(EStoryFlag flag)
     {
-        storyFlags.Add(flag);
+        // HashSet처럼 중복 방지를 위해 확인 후 추가
+        if (!storyFlags.Contains(flag))
+        {
+            storyFlags.Add(flag);
+        }
     }
 }
 

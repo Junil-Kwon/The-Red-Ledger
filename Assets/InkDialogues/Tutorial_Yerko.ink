@@ -1,8 +1,8 @@
 ﻿EXTERNAL PlayBGM(string)
 EXTERNAL PlaySFX(string)
-EXTERNAL UpdateStatus(int)
+EXTERNAL UpdateStatusRecoveryCount(bool)
 EXTERNAL AddIntel(int)
-EXTERNAL AddCreativeFlagPoint()
+EXTERNAL AddCreativeFlagCount()
 EXTERNAL TriggerStoryFlag(string)
 EXTERNAL GetObjectiveState()
 EXTERNAL SystemNotify(string)
@@ -33,7 +33,7 @@ VAR choice_005 = -1
     ~AddIntel(2)
     -> Choice_001_AB
 * ["이름을 밝히길 거부하고 있습니다." # language: Osten]
-    ~UpdateStatus(-1)
+    ~UpdateStatusRecoveryCount(false)
     ~TriggerStoryFlag("YERKO_NAME_CONCEALED")
     -> Choice_001_C
 
@@ -59,7 +59,7 @@ VAR choice_005 = -1
     -> BAD_ENDING
 * ["거부하는 듯한 반응이었지만 확신이 없어서 재확인 중이었습니다. 억양이 불분명해 혼선이 생겼습니다. 예르코 드라간이라고 합니다." # language: Osten]
     다음부터는 바로 전달하십시오. # speaker: 0 # language: Osten
-    ~AddCreativeFlagPoint()
+    ~AddCreativeFlagCount()
     -> Choice_002
 
 === Choice_002 ===
@@ -75,7 +75,7 @@ VAR choice_005 = -1
 ~PlaySFX("CLOCK_TICKING")
 
 * ["17번 국경 수비대 소속이라고 합니다." # language: Osten]
-    ~UpdateStatus(1)
+    ~UpdateStatusRecoveryCount(true)
     { GetObjectiveState() == "GREEN":
         ~AddIntel(2)
     - else:
@@ -83,7 +83,7 @@ VAR choice_005 = -1
     }
     -> Choice_002_AB
 * ["17번 국경 수비대 소속입니다. 심리적으로 불안정한 상태입니다." # language: Osten]
-    ~UpdateStatus(1)
+    ~UpdateStatusRecoveryCount(true)
     { GetObjectiveState() == "GREEN":
         ~AddIntel(2)
     - else:
@@ -92,7 +92,7 @@ VAR choice_005 = -1
     -> Choice_002_AB
 * ["소속을 모른다고 합니다. 징집된 지 얼마 안 된 것으로 보입니다." # language: Osten]
     ~previous_state = GetObjectiveState()
-    ~UpdateStatus(-1)
+    ~UpdateStatusRecoveryCount(false)
     ~TriggerStoryFlag("YERKO_FALSE_AFFILIATION")
     -> Choice_002_C
 
@@ -133,7 +133,7 @@ VAR choice_005 = -1
 
 * ["협조하지 않으면 오늘 밤이 마지막이 될 거라고 합니다." # language: Valeska]
     ~previous_state = GetObjectiveState()
-    ~UpdateStatus(-1)
+    ~UpdateStatusRecoveryCount(false)
     { GetObjectiveState() == "YELLOW":
         ~AddIntel(1)
     - else:
@@ -142,7 +142,7 @@ VAR choice_005 = -1
     -> Choice_003_A
 * ["잘 협조하는 게 서로에게 좋을 거라고 합니다." # language: Valeska]
     ~previous_state = GetObjectiveState()
-    ~UpdateStatus(1)
+    ~UpdateStatusRecoveryCount(true)
     { GetObjectiveState() == "GREEN":
         ~AddIntel(2)
     - else:
@@ -150,7 +150,7 @@ VAR choice_005 = -1
     }
     -> Choice_003_BC
 * ["잘 협조하면 선처해준다고 합니다. 지금 할 수 있는 말을 하세요." # language: Valeska]
-    ~UpdateStatus(1)
+    ~UpdateStatusRecoveryCount(true)
     { GetObjectiveState() == "GREEN":
         ~AddIntel(2)
     - else:
@@ -271,7 +271,7 @@ VAR choice_005 = -1
         ~AddIntel(2)
     - "YELLOW":
         ~AddIntel(1)
-        ~UpdateStatus(1)
+        ~UpdateStatusRecoveryCount(true)
     - else:
         ~AddIntel(0)
     }
@@ -284,7 +284,7 @@ VAR choice_005 = -1
         ~AddIntel(2)
     - "YELLOW":
         ~AddIntel(1)
-        ~UpdateStatus(1)
+        ~UpdateStatusRecoveryCount(true)
     - else:
         ~AddIntel(0)
     }
@@ -297,7 +297,7 @@ VAR choice_005 = -1
         ~AddIntel(2)
     - "YELLOW":
         ~AddIntel(1)
-        ~UpdateStatus(1)
+        ~UpdateStatusRecoveryCount(true)
     - else:
         ~AddIntel(0)
     }   
