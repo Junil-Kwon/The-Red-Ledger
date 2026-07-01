@@ -351,6 +351,9 @@ public class DialogueManager : MonoBehaviour
                         break;
                 }
                 break;
+            default:
+                Debug.LogWarning($"알 수 없는 태그: {key}:{value}");
+                break;
         }
     }
     
