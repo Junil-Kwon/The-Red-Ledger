@@ -16,7 +16,7 @@ public class DialogueManager : MonoBehaviour
     
     [Header("Speaker UI Elements")]
     [SerializeField] private GameObject _playerSpeechPanel;
-    [SerializeField] private List<GameObject> _speechBubbles = new List<GameObject>();
+    [SerializeField] private List<GameObject> _textBoxes = new List<GameObject>();
     [SerializeField] private List<GameObject> _currentChoices = new List<GameObject>();
     //[SerializeField] private GameObject choiceButtonPrefab;
     //[SerializeField] private Transform choiceContainer;
@@ -25,14 +25,17 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private float _textSpeed = 0.05f;
 
     private int _speakerIndex = 0;
-    private Color _nextTextColor = Color.black;
+    private Color _nextTextColor = Color.clear;
     private string _processedText;
     private Coroutine _typingCoroutine;
     private bool _diagWaitingForAdvance = false;
     private bool _diagAdvanceRequested = false;
     private bool _diagLineSkipFlag = false; // 타이핑 스킵 플래그
+    private bool _cutSceneProcessing = false; // 컷씬 진행 중인지 여부
 
     private InkStatusManager _inkStatusManager;
+    private TextBoxRouter _textBoxRouter;
+    private CutSceneEffectManager _cutsceneEffectManager;
 
     public InkStatusManager InkStatusManager
     {
@@ -48,6 +51,38 @@ public class DialogueManager : MonoBehaviour
                 }
             }
             return _inkStatusManager;
+        }
+    }
+    public TextBoxRouter TextBoxRouter
+    {
+        get
+        {
+            if (_textBoxRouter == null)
+            {
+                _textBoxRouter = FindAnyObjectByType<TextBoxRouter>();
+                if (_textBoxRouter == null)
+                {
+                    Debug.Log("TextBoxRouter가 씬에 없습니다. 새로 생성합니다.");
+                    _textBoxRouter = new GameObject("TextBoxRouter").AddComponent<TextBoxRouter>();
+                }
+            }
+            return _textBoxRouter;
+        }
+    }
+    public CutSceneEffectManager CutSceneEffectManager
+    {
+        get
+        {
+            if (_cutsceneEffectManager == null)
+            {
+                _cutsceneEffectManager = FindAnyObjectByType<CutSceneEffectManager>();
+                if (_cutsceneEffectManager == null)
+                {
+                    Debug.Log("CutSceneEffectManager가 씬에 없습니다. 새로 생성합니다.");
+                    _cutsceneEffectManager = new GameObject("CutSceneEffectManager").AddComponent<CutSceneEffectManager>();
+                }
+            }
+            return _cutsceneEffectManager;
         }
     }
 
@@ -77,6 +112,13 @@ public class DialogueManager : MonoBehaviour
     void Start()
     {
         InitializeStory();
+
+        for (int i = 0; i < _textBoxes.Count; i++)
+        {
+            Debug.Log($"{i}번째 말풍선 등록: {_textBoxes[i].name}");
+            TextBoxRouter.RegisterTextBox(i, _textBoxes[i].GetComponentInChildren<ITextBoxTarget>(true));
+        }
+
         StartDialogue();
     }
 
@@ -85,8 +127,8 @@ public class DialogueManager : MonoBehaviour
     {
         //Debug.Log("HandleClick called");
 
-        if (PlayerInputManager.Instance.IsPointerOverUIWhenClick())
-            return; // UI 위에서 클릭한 경우 대화 진행 방지
+        if (PlayerInputManager.Instance.IsPointerOverUIWhenClick() || _cutSceneProcessing)
+            return; // UI 위에서 클릭한 경우 또는 컷씬 연출 진행 중일 때 대화 진행 방지
 
         skipLine(_diagWaitingForAdvance);
     }
@@ -94,6 +136,9 @@ public class DialogueManager : MonoBehaviour
     private void HandleInteract(InputAction.CallbackContext ctx)
     {
         //Debug.Log("HandleInteraction called");
+
+        if (_cutSceneProcessing)
+            return; // 컷씬 연출 진행 중일 때는 상호작용 무시
 
         switch(ctx.control.displayName)
         {
@@ -114,6 +159,17 @@ public class DialogueManager : MonoBehaviour
     }
 
     // =================== 대화 시스템 methods ===================
+
+    public void SetCutSceneProcessing(bool isProcessing)
+    {
+        _cutSceneProcessing = isProcessing;
+    }
+
+    private void InitFields()
+    {
+        _speakerIndex = 0;
+        _nextTextColor = Color.black;
+    }
 
     void ChooseChoiceByKey(string key)
     {
@@ -148,7 +204,6 @@ public class DialogueManager : MonoBehaviour
     
     void BindExternalFunctions()
     {
-        
         _story.BindExternalFunction("PlayBGM", (string BGMName) => {
             Debug.Log($"PlayBGM called with: {BGMName}");
             /*
@@ -175,6 +230,18 @@ public class DialogueManager : MonoBehaviour
                 Debug.LogError($"Ink에서 잘못된 SFX 이름을 보냈습니다: {SFXName}");
             }
             */
+        });
+
+        _story.BindExternalFunction("PlayCutScene", (string cutSceneType, bool isFade) => {
+            Debug.Log($"PlayCutScene called with: {cutSceneType}");
+            if (Enum.TryParse(cutSceneType, true, out CutSceneEffectManager.CutSceneType type))
+            {
+                CutSceneEffectManager.PlayCutScene(type, isFade);
+            }
+            else
+            {
+                Debug.LogError($"Ink에서 잘못된 컷씬 타입을 보냈습니다: {cutSceneType}");
+            }
         });
         
         _story.BindExternalFunction("UpdateStatusRecoveryCount", (bool value) => {
@@ -248,6 +315,9 @@ public class DialogueManager : MonoBehaviour
             }
 
             ProcessTags(_story.currentTags);
+            
+            yield return null;
+            yield return new WaitUntil(() => _cutSceneProcessing == false); // 대기 시간 적용 여부 확인
 
             // 타이핑 시작
             _typingCoroutine = StartCoroutine(TypeText(_processedText));
@@ -281,30 +351,39 @@ public class DialogueManager : MonoBehaviour
 
     IEnumerator TypeText(string text)
     {
-        SpeechBubble bubble = _speechBubbles[_speakerIndex].GetComponent<SpeechBubble>();
-        bubble.BubbleInit(); // 버블 초기화
-        TextMeshProUGUI speakerText = _speechBubbles[_speakerIndex].GetComponentInChildren<TextMeshProUGUI>();
-        string tmpText = ""; // 임시 텍스트 변수 초기화
-        speakerText.color = _nextTextColor; // 텍스트 색상 적용
+        ITextBoxTarget target = TextBoxRouter.GetTextBox(_speakerIndex);
+        if (target == null)
+        {
+            Debug.LogError($"speaker {_speakerIndex}에 등록된 텍스트박스가 없습니다.");
+            yield break;
+        }
+
+        target.BubbleInit();
+        string tmpText = "";
+        if (_nextTextColor == Color.clear) 
+        {
+            _nextTextColor = CutSceneEffectManager.IsFadeCutSceneActive ? Color.white : Color.black; // 컷씬 연출 여부에 따라 텍스트 색상 초기화
+        }
+        target.SetTextColor(_nextTextColor);
 
         for (int i = 0; i < text.Length; i++)
         {
             tmpText += text[i];
-            bubble.UpdateBubble(tmpText); // 줄 바꿈 체크
-
+            target.UpdateBubble(tmpText);
             yield return new WaitForSeconds(_textSpeed);
 
-            if (_diagLineSkipFlag) 
+            if (_diagLineSkipFlag)
             {
-                _diagLineSkipFlag = false; // 스킵 플래그 초기화
-                tmpText = text; // 대사 출력 스킵
-                bubble.UpdateBubble(tmpText); // 줄 바꿈 체크
-                _nextTextColor = Color.black; // 텍스트 색상 초기화
-                yield break; // 스킵 플래그가 설정되면 타이핑 중단
+                _diagLineSkipFlag = false;
+                tmpText = text;
+                target.UpdateBubble(tmpText);
+                _speakerIndex = 0; // 스피커 인덱스 초기화
+                _nextTextColor = Color.clear;
+                yield break;
             }
         }
-
-        _nextTextColor = Color.black; // 텍스트 색상 초기화
+        _speakerIndex = 0; // 스피커 인덱스 초기화
+        _nextTextColor = Color.clear; // 텍스트 색상 초기화
     }
     
     void ProcessTags(List<string> tags)
@@ -333,6 +412,9 @@ public class DialogueManager : MonoBehaviour
                 // 화자 변경
                 _speakerIndex = int.Parse(value);
                 break;
+            case "name":
+                // 화자 이름 변경
+                break;
             case "emotion":
                 // 표정 변경
                 break;
@@ -347,7 +429,7 @@ public class DialogueManager : MonoBehaviour
                         _nextTextColor = Color.blue;
                         break;
                     default:
-                        _nextTextColor = Color.black; // 기본 색상
+                        _nextTextColor = Color.clear;
                         break;
                 }
                 break;
@@ -380,7 +462,7 @@ public class DialogueManager : MonoBehaviour
             
             //currentChoices.Add(choiceButton);
             
-            _nextTextColor = Color.black; // 텍스트 색상 초기화
+            _nextTextColor = Color.clear; // 선택지 색상 초기화
         }
         
         if (_story.currentChoices.Count == 0)

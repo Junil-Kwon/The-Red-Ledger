@@ -11,10 +11,10 @@ GameObject:
   - component: {fileID: 682972513455234962}
   - component: {fileID: 4104248870099395877}
   - component: {fileID: 9083069033013243189}
-  - component: {fileID: 6789807166819696843}
+  - component: {fileID: 5907096529641433544}
   m_Layer: 0
   m_Name: Text (TMP)
-  m_TagString: Untagged
+  m_TagString: NoneFunctionalUI
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -36,7 +36,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1000, y: 50}
+  m_SizeDelta: {x: 1600, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4104248870099395877
 CanvasRenderer:
@@ -93,8 +93,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 75
+  m_fontSizeBase: 75
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -138,7 +138,7 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!114 &6789807166819696843
+--- !u!114 &5907096529641433544
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -147,11 +147,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 372474373358055760}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: abc4be0521a2d134d98b57a79c587c3c, type: 3}
+  m_Script: {fileID: 11500000, guid: 1aa9fb3a9c9316143b41ecbb60df50d3, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpeechBubble
-  maxWidth: 0
-  isStretchable: 0
+  m_EditorClassIdentifier: Assembly-CSharp::TMPTextBoxAdapter
 --- !u!1 &1349520682465772225
 GameObject:
   m_ObjectHideFlags: 0
@@ -165,7 +163,7 @@ GameObject:
   - component: {fileID: 7322696102492749627}
   m_Layer: 0
   m_Name: Background
-  m_TagString: Untagged
+  m_TagString: NoneFunctionalUI
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -240,9 +238,11 @@ GameObject:
   - component: {fileID: 5980439430785939785}
   - component: {fileID: 6613930793697366167}
   - component: {fileID: 7191369678547844062}
+  - component: {fileID: 1081720728174637862}
+  - component: {fileID: 6018231906757104039}
   m_Layer: 5
   m_Name: Fade Canvas
-  m_TagString: Untagged
+  m_TagString: NoneFunctionalUI
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -286,7 +286,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
   m_UseReflectionProbes: 0
-  m_AdditionalShaderChannelsFlag: 1
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 20
@@ -331,3 +331,30 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &1081720728174637862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8038631056393685654}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3ce4e2fa532d104cb25a91ad99c9b1d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FadeCutScene
+  _boxes:
+  - {fileID: 372474373358055760}
+  _fadeDuration: 1
+--- !u!225 &6018231906757104039
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8038631056393685654}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 1
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0

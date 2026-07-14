@@ -1,11 +1,12 @@
 ﻿EXTERNAL PlayBGM(string)
 EXTERNAL PlaySFX(string)
-EXTERNAL FadeUI(bool)
+EXTERNAL PlayCutScene(string, bool)
 //EXTERNAL SystemNotify(string)
 
 -> Scene_001
 
 === Scene_001 ===
+~PlayCutScene("FadeIn", false)
 ~PlaySFX("코고는 소리")
 
 장난감 병정 이야기를 읽어 본 적 있는가. # name: NAR
@@ -27,7 +28,7 @@ EXTERNAL FadeUI(bool)
 
 나는 특별하지 않다는 것을. # name: NAR
 
-~FadeUI(false)
+~PlayCutScene("FadeOut", true)
 
 또 그 시절 꿈을 꿨다. # name: DEMIAN
 
