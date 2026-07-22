@@ -77,6 +77,8 @@ EXTERNAL PlayCutScene(string, bool)
 
 (연출) 빛이 쏟아진다. # name: NAR
 
+~PlayCutScene("FadeInWhite", true)
+
 -> END
 
 

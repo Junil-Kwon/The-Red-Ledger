@@ -25,6 +25,7 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private float _textSpeed = 0.05f;
 
     private int _speakerIndex = 0;
+    private Color _defaultTextColor = Color.black;
     private Color _nextTextColor = Color.clear;
     private string _processedText;
     private Coroutine _typingCoroutine;
@@ -160,9 +161,22 @@ public class DialogueManager : MonoBehaviour
 
     // =================== 대화 시스템 methods ===================
 
+    public void SetInkJSON(TextAsset inkJSON)
+    {
+        _inkJSON = inkJSON;
+        InitializeStory();
+        //말풍선 구독
+        StartDialogue();
+    }
+
     public void SetCutSceneProcessing(bool isProcessing)
     {
         _cutSceneProcessing = isProcessing;
+    }
+
+    public void SetDefaultTextColor(Color color)
+    {
+        _defaultTextColor = color;
     }
 
     private void InitFields()
@@ -189,6 +203,11 @@ public class DialogueManager : MonoBehaviour
     
     void InitializeStory()
     {
+        if (_inkJSON == null)
+        {
+            Debug.LogWarning("Ink JSON 파일이 할당되지 않았습니다.");
+            return;
+        }
         _story = new Story(_inkJSON.text);
         _story.onError += OnStoryError;
         BindExternalFunctions();
@@ -232,11 +251,11 @@ public class DialogueManager : MonoBehaviour
             */
         });
 
-        _story.BindExternalFunction("PlayCutScene", (string cutSceneType, bool isFade) => {
+        _story.BindExternalFunction("PlayCutScene", (string cutSceneType, bool mode) => {
             Debug.Log($"PlayCutScene called with: {cutSceneType}");
             if (Enum.TryParse(cutSceneType, true, out CutSceneEffectManager.CutSceneType type))
             {
-                CutSceneEffectManager.PlayCutScene(type, isFade);
+                CutSceneEffectManager.PlayCutScene(type, mode);
             }
             else
             {
@@ -294,8 +313,11 @@ public class DialogueManager : MonoBehaviour
     
     public void StartDialogue()
     {
-        _diagWaitingForAdvance = false;
-        _diagAdvanceRequested = false;
+        if (_story == null)
+        {
+            Debug.LogWarning("Ink 스토리가 초기화되지 않았습니다. 대화를 시작할 수 없습니다.");
+            return;
+        }
         _playerSpeechPanel.SetActive(true);
         StartCoroutine(ContinueStory());
     }
@@ -308,11 +330,13 @@ public class DialogueManager : MonoBehaviour
             string text = _story.Continue();
             _processedText = text.Trim();
 
+            /*
             // ⭐ [수정된 부분] 빈 문자열(엔터 등)일 경우 클릭 대기를 건너뛰고 바로 다음으로 진행
             if (string.IsNullOrEmpty(_processedText))
             {
                 continue; 
             }
+            */
 
             ProcessTags(_story.currentTags);
             
@@ -362,9 +386,13 @@ public class DialogueManager : MonoBehaviour
         string tmpText = "";
         if (_nextTextColor == Color.clear) 
         {
-            _nextTextColor = CutSceneEffectManager.IsFadeCutSceneActive ? Color.white : Color.black; // 컷씬 연출 여부에 따라 텍스트 색상 초기화
+            target.SetTextColor(_defaultTextColor); // 기본 색상 설정
         }
-        target.SetTextColor(_nextTextColor);
+        else 
+        {
+            target.SetTextColor(_nextTextColor);
+            _nextTextColor = Color.clear; // 텍스트 색상 초기화
+        }
 
         for (int i = 0; i < text.Length; i++)
         {
@@ -497,7 +525,7 @@ public class DialogueManager : MonoBehaviour
     
     void EndDialogue()
     {
-        _playerSpeechPanel.SetActive(false);
+        Debug.Log("대화 종료");
     }
     
     public void JumpToKnot(string knotName)

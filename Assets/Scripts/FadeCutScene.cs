@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class FadeCutScene : MonoBehaviour
 {
     [SerializeField] private List<GameObject> _boxes = new();
     [SerializeField] private float _fadeDuration = 1f;
+    [SerializeField] private Image _backgroundImage;
 
     private TextBoxLayer _layer;
     private Sequence _fadeSequence;
 
-    public void Show(bool isFade = true)
+    public void Show(bool isFade = true, bool isWhite = false)
     {
         if (_layer != null)
         {
@@ -28,6 +30,8 @@ public class FadeCutScene : MonoBehaviour
             return;
         }
 
+        dialogueManager.SetDefaultTextColor(isWhite ? Color.black : Color.white); // 텍스트 색상 설정
+        _backgroundImage.color = isWhite ? Color.white : Color.black;
         gameObject.SetActive(true);
         dialogueManager.SetCutSceneProcessing(true); // 컷씬 진행 중임을 알림
 
@@ -63,7 +67,7 @@ public class FadeCutScene : MonoBehaviour
         }
     }
 
-    public void Hide(bool isFade = true)
+    public void Hide(bool isFade = true, bool isWhite = false)
     {
         if (_layer == null)
         {
@@ -91,6 +95,7 @@ public class FadeCutScene : MonoBehaviour
             seq.OnComplete(() => {
                 gameObject.SetActive(false);
                 dialogueManager.SetCutSceneProcessing(false);
+                dialogueManager.SetDefaultTextColor(Color.black); // 텍스트 색상 설정
             }); // 페이드 아웃 완료 후 비활성화
             
             _fadeSequence = seq;
