@@ -14,10 +14,22 @@ public class GameSettings
 [System.Serializable]
 public class GameSaveData
 {
+    /*
+    public enum EInGamePart
+    {
+        Investigation,
+        Interpretation,
+    }
+    */
+
     // HashSet 대신 JsonUtility가 인식할 수 있는 List로 변경: HashSet은 JsonUtility에서 직렬화되지 않으므로 List로 변경
     [SerializeField] private List<EStoryFlag> storyFlags = new List<EStoryFlag>();
+    [SerializeField] private int chapterIndex = 1; // 현재 진행 중인 챕터 인덱스
+    [SerializeField] private int dayIndex = 1; // 현재 진행 중인 날짜 인덱스
 
     public List<EStoryFlag> StoryFlags => storyFlags;
+    public int ChapterIndex => chapterIndex;
+    public int DayIndex => dayIndex;
 
     public void AddStoryFlag(EStoryFlag flag)
     {
@@ -26,6 +38,17 @@ public class GameSaveData
         {
             storyFlags.Add(flag);
         }
+    }
+
+    public void ChapterClear()
+    {
+        chapterIndex++; // 챕터 인덱스 증가
+        dayIndex = 1; // 챕터가 바뀌면 날짜 인덱스는 초기화
+    }
+
+    public void NextDay()
+    {
+        dayIndex++; // 날짜 인덱스 증가
     }
 }
 
@@ -112,5 +135,28 @@ public class DataManager : Singleton<DataManager>
         
         currentSaveData.AddStoryFlag(flag);
     }
+
+    public void ClearChapter()
+    {
+        if (currentSaveData == null)
+        {
+            Debug.LogWarning("No save data loaded. Cannot clear chapter.");
+            return; // 세이브 데이터가 없으면 경고 후 종료
+        }
+
+        currentSaveData.ChapterClear();
+    }
+
+    public void AdvanceToNextDay()
+    {
+        if (currentSaveData == null)
+        {
+            Debug.LogWarning("No save data loaded. Cannot advance to next day.");
+            return; // 세이브 데이터가 없으면 경고 후 종료
+        }
+
+        currentSaveData.NextDay();
+    }
+
     #endregion
 }
