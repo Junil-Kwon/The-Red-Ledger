@@ -6,9 +6,29 @@ using StoryFlags; // StoryFlag enum이 정의된 네임스페이스를 임포트
 [System.Serializable]
 public class GameSettings
 {
-    [SerializeField] private float BgmVolume = 1.0f;
-    [SerializeField] private float SfxVolume = 1.0f;
+    [SerializeField] private float _masterVolume = 1.0f;
+    [SerializeField] private float _bgmVolume = 1.0f;
+    [SerializeField] private float _sfxVolume = 1.0f;
     //private ScriptSpeedState ScriptSpeed = ScriptSpeedState.Normal;
+
+    public float MasterVolume => _masterVolume;
+    public float BgmVolume => _bgmVolume;
+    public float SfxVolume => _sfxVolume;
+
+    public void SetMasterVolume(float volume)
+    {
+        _masterVolume = Mathf.Clamp01(volume);
+    }
+
+    public void SetBgmVolume(float volume)
+    {
+        _bgmVolume = Mathf.Clamp01(volume);
+    }
+
+    public void SetSfxVolume(float volume)
+    {
+        _sfxVolume = Mathf.Clamp01(volume);
+    }
 }
 
 [System.Serializable]
@@ -23,32 +43,32 @@ public class GameSaveData
     */
 
     // HashSet 대신 JsonUtility가 인식할 수 있는 List로 변경: HashSet은 JsonUtility에서 직렬화되지 않으므로 List로 변경
-    [SerializeField] private List<EStoryFlag> storyFlags = new List<EStoryFlag>();
-    [SerializeField] private int chapterIndex = 1; // 현재 진행 중인 챕터 인덱스
-    [SerializeField] private int dayIndex = 1; // 현재 진행 중인 날짜 인덱스
+    [SerializeField] private List<EStoryFlag> _storyFlags = new List<EStoryFlag>();
+    [SerializeField] private int _chapterIndex = 0; // 현재 진행 중인 챕터 인덱스
+    [SerializeField] private int _ddayIndex = 7; // 챕터 내 남은 날짜 인덱스
 
-    public List<EStoryFlag> StoryFlags => storyFlags;
-    public int ChapterIndex => chapterIndex;
-    public int DayIndex => dayIndex;
+    public List<EStoryFlag> StoryFlags => _storyFlags;
+    public int ChapterIndex => _chapterIndex;
+    public int DDayIndex => _ddayIndex;
 
     public void AddStoryFlag(EStoryFlag flag)
     {
         // HashSet처럼 중복 방지를 위해 확인 후 추가
-        if (!storyFlags.Contains(flag))
+        if (!_storyFlags.Contains(flag))
         {
-            storyFlags.Add(flag);
+            _storyFlags.Add(flag);
         }
     }
 
     public void ChapterClear()
     {
-        chapterIndex++; // 챕터 인덱스 증가
-        dayIndex = 1; // 챕터가 바뀌면 날짜 인덱스는 초기화
+        _chapterIndex++; // 챕터 인덱스 증가
+        _ddayIndex = 7; // 챕터가 바뀌면 날짜 인덱스는 초기화
     }
 
     public void NextDay()
     {
-        dayIndex++; // 날짜 인덱스 증가
+        _ddayIndex--; // 날짜 인덱스 감소
     }
 }
 
@@ -57,43 +77,63 @@ public class DataManager : Singleton<DataManager>
     public GameSaveData currentSaveData {get; private set;} = null;
     //private int currentSaveSlot = 0; // 현재 선택된 세이브 슬롯
     public GameSettings currentSettings {get; private set;} = new GameSettings();
-    private string saveFolderPath => Path.Combine(Application.persistentDataPath, "SaveData");
+    // C:\Users\[user name]\AppData\LocalLow\[company name]\[product name]
+    private string saveDataFolderPath => Path.Combine(Application.persistentDataPath, "SaveData");
+    private string settingsFolderPath => Path.Combine(Application.persistentDataPath, "Settings");
+
+    public GameSaveData CurrentSaveData => currentSaveData;
+    public GameSettings CurrentSettings => currentSettings;
 
     protected override void Awake()
     {
         base.Awake();
 
         // 저장용 폴더가 없다면 미리 생성
-        if (!Directory.Exists(saveFolderPath))
+        if (!Directory.Exists(saveDataFolderPath))
         {
-            Directory.CreateDirectory(saveFolderPath);
-            Debug.Log("Save folder created at: " + saveFolderPath);
+            Directory.CreateDirectory(saveDataFolderPath);
+            Debug.Log("Save folder created at: " + saveDataFolderPath);
         }
 
-        CreateNewGame(); // 새 게임 데이터 초기화(이후에는 수정)
+        if (!Directory.Exists(settingsFolderPath))
+        {
+            Directory.CreateDirectory(settingsFolderPath);
+            Debug.Log("Settings folder created at: " + settingsFolderPath);
+        }
+
+        LoadSettings(); // 설정 파일 로드
+        CreateNewGame(); // 새 게임 데이터 초기화(이후에는 수정)!!!!!!!!!!!!!!!!!!!!!!!!!
+        //SaveGameData(currentSaveData, 0); // 슬롯 0에 새 게임 데이터 저장(이후에는 수정)!!!!!!!!!!!!!!!!!!!!!!!!!
     }
 
     #region [1] 설정 파일 (System Settings) 관련
-    private string SettingsPath => Path.Combine(saveFolderPath, "settings.json");
+    private string SettingsPath => Path.Combine(settingsFolderPath, "settings.json");
 
-    public void SaveSettings(GameSettings settings)
+    public void SaveSettings()
     {
-        string json = JsonUtility.ToJson(settings, true); // true로 주면 가독성 좋게 정렬됨
+        string json = JsonUtility.ToJson(currentSettings, true); // true로 주면 가독성 좋게 정렬됨
         File.WriteAllText(SettingsPath, json);
     }
 
     public void LoadSettings()
     {
-        if (!File.Exists(SettingsPath)) return; // 파일 없으면 기본값 반환
+        if (!File.Exists(SettingsPath)) // 설정 파일이 없으면 새로 생성
+        {
+            Debug.LogWarning("Settings file not found. Creating new settings.");
+            currentSettings = new GameSettings();
+            SaveSettings();
+            return;
+        }
 
         string json = File.ReadAllText(SettingsPath);
         currentSettings = JsonUtility.FromJson<GameSettings>(json);
     }
+
     #endregion
 
     #region [2] 세이브 파일 (Game Save Data) 관련
     // 슬롯 번호(1, 2, 3...)를 받아 각각 다른 파일로 저장
-    private string GameSavePath(int slotIndex) => Path.Combine(saveFolderPath, $"save_slot_{slotIndex:D2}.json");
+    private string GameSavePath(int slotIndex) => Path.Combine(saveDataFolderPath, $"save_slot_{slotIndex:D2}.json");
 
     public void CreateNewGame()
     {
@@ -113,6 +153,15 @@ public class DataManager : Singleton<DataManager>
 
         string json = File.ReadAllText(path);
         currentSaveData = JsonUtility.FromJson<GameSaveData>(json);
+    }
+
+    public GameSaveData PeekGameData(int slotIndex)
+    {
+        string path = GameSavePath(slotIndex);
+        if (!File.Exists(path)) return null;
+
+        string json = File.ReadAllText(path);
+        return JsonUtility.FromJson<GameSaveData>(json);
     }
 
     public void DeleteGameData(int slotIndex)
