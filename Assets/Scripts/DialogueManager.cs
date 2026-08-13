@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Ink.Runtime;
 using TMPro;
 using UnityEngine;
@@ -89,19 +90,19 @@ public class DialogueManager : MonoBehaviour
 
     void OnEnable()
     {
-        if (PlayerInputManager.Instance != null)
+        if (InputManager.Instance != null)
         {
-            PlayerInputManager.Instance.Input.Player.Click.performed += HandleClick;
-            PlayerInputManager.Instance.Input.Player.Interact.performed += HandleInteract;
+            InputManager.Instance.Input.Player.Click.performed += HandleClick;
+            InputManager.Instance.Input.Player.Interact.performed += HandleInteract;
         }
     }
 
     void OnDisable()
     {
-        if (PlayerInputManager.Instance != null)
+        if (InputManager.Instance != null)
         {
-            PlayerInputManager.Instance.Input.Player.Click.performed -= HandleClick;
-            PlayerInputManager.Instance.Input.Player.Interact.performed -= HandleInteract;
+            InputManager.Instance.Input.Player.Click.performed -= HandleClick;
+            InputManager.Instance.Input.Player.Interact.performed -= HandleInteract;
         }
     }
 
@@ -112,6 +113,7 @@ public class DialogueManager : MonoBehaviour
     
     void Start()
     {
+        /*
         InitializeStory();
 
         for (int i = 0; i < _textBoxes.Count; i++)
@@ -121,6 +123,7 @@ public class DialogueManager : MonoBehaviour
         }
 
         StartDialogue();
+        */
     }
 
     // =================== 입력 methods ===================
@@ -128,7 +131,7 @@ public class DialogueManager : MonoBehaviour
     {
         //Debug.Log("HandleClick called");
 
-        if (PlayerInputManager.Instance.IsPointerOverUIWhenClick() || _cutSceneProcessing)
+        if (InputManager.Instance.IsPointerOverUIWhenClick() || _cutSceneProcessing)
             return; // UI 위에서 클릭한 경우 또는 컷씬 연출 진행 중일 때 대화 진행 방지
 
         skipLine(_diagWaitingForAdvance);
@@ -156,7 +159,6 @@ public class DialogueManager : MonoBehaviour
                 // 다른 상호작용 키에 대한 처리 (예: E키로 대화 시작 등)
                 break;
         }
-        
     }
 
     // =================== 대화 시스템 methods ===================
@@ -165,7 +167,16 @@ public class DialogueManager : MonoBehaviour
     {
         _inkJSON = inkJSON;
         InitializeStory();
+
+        ITextBoxTarget[] textBoxTargets = FindObjectsByType<MonoBehaviour>().OfType<ITextBoxTarget>().ToArray();
+        Debug.Log($"발견된 ITextBoxTarget 개수: {textBoxTargets.Length}");
         //말풍선 구독
+        for (int i = 0; i < textBoxTargets.Length; i++)
+        {
+            //Debug.Log($"{i}번째 말풍선 등록: {_textBoxes[i].name}");
+            TextBoxRouter.RegisterTextBox(i, textBoxTargets[i]);
+        }
+
         StartDialogue();
     }
 
@@ -251,11 +262,11 @@ public class DialogueManager : MonoBehaviour
             */
         });
 
-        _story.BindExternalFunction("PlayCutScene", (string cutSceneType, bool mode) => {
+        _story.BindExternalFunction("PlayCutScene", (string cutSceneType, bool mode1, bool mode2) => {
             Debug.Log($"PlayCutScene called with: {cutSceneType}");
             if (Enum.TryParse(cutSceneType, true, out CutSceneEffectManager.CutSceneType type))
             {
-                CutSceneEffectManager.PlayCutScene(type, mode);
+                CutSceneEffectManager.PlayCutScene(type, mode1, mode2);
             }
             else
             {
@@ -293,7 +304,7 @@ public class DialogueManager : MonoBehaviour
         });
 
         _story.BindExternalFunction("GetObjectiveState", () => {
-            return InkStatusManager.GetObjectiveState();
+            return InkStatusManager?.GetObjectiveState();
         });
 
         _story.BindExternalFunction("SystemNotify", (string action) => {
@@ -318,7 +329,7 @@ public class DialogueManager : MonoBehaviour
             Debug.LogWarning("Ink 스토리가 초기화되지 않았습니다. 대화를 시작할 수 없습니다.");
             return;
         }
-        _playerSpeechPanel.SetActive(true);
+        //_playerSpeechPanel.SetActive(true);
         StartCoroutine(ContinueStory());
     }
     
@@ -330,18 +341,16 @@ public class DialogueManager : MonoBehaviour
             string text = _story.Continue();
             _processedText = text.Trim();
 
-            /*
+            ProcessTags(_story.currentTags);
+            
+            yield return null;
+            yield return new WaitUntil(() => _cutSceneProcessing == false); // 대기 시간 적용 여부 확인
+
             // ⭐ [수정된 부분] 빈 문자열(엔터 등)일 경우 클릭 대기를 건너뛰고 바로 다음으로 진행
             if (string.IsNullOrEmpty(_processedText))
             {
                 continue; 
             }
-            */
-
-            ProcessTags(_story.currentTags);
-            
-            yield return null;
-            yield return new WaitUntil(() => _cutSceneProcessing == false); // 대기 시간 적용 여부 확인
 
             // 타이핑 시작
             _typingCoroutine = StartCoroutine(TypeText(_processedText));
@@ -358,7 +367,12 @@ public class DialogueManager : MonoBehaviour
         }
         
         // 선택지 표시
-        DisplayChoices();
+        DisplayChoices(out bool choicesAvailable);
+
+        if (!choicesAvailable)
+        {
+            EndDialogue();
+        }
     }
 
     void skipLine(bool diagWaitingForAdvance)
@@ -467,7 +481,7 @@ public class DialogueManager : MonoBehaviour
         }
     }
     
-    void DisplayChoices()
+    void DisplayChoices(out bool choicesAvailable)
     {
         //ClearChoices();
         
@@ -492,12 +506,8 @@ public class DialogueManager : MonoBehaviour
             
             _nextTextColor = Color.clear; // 선택지 색상 초기화
         }
-        
-        if (_story.currentChoices.Count == 0)
-        {
-            // 대화 종료
-            EndDialogue();
-        }
+
+        choicesAvailable = _story.currentChoices.Count > 0;
     }
     
     void OnChoiceSelected(int choiceIndex)

@@ -3945,6 +3945,50 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 594216664}
   m_CullTransparentMesh: 1
+--- !u!1 &631259767
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 631259769}
+  - component: {fileID: 631259768}
+  m_Layer: 0
+  m_Name: DialogueDataReceiver
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &631259768
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 631259767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e6319e0f5c4d3241867625c2772df6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueDataReceiver
+--- !u!4 &631259769
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 631259767}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &643877758
 GameObject:
   m_ObjectHideFlags: 0
@@ -6399,7 +6443,7 @@ MonoBehaviour:
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
-          m_BoolArgument: 0
+          m_BoolArgument: 1
         m_CallState: 2
 --- !u!114 &1578105680
 MonoBehaviour:
@@ -7656,7 +7700,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9b467bf5bd60b24c98d4ba247b9f198, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameDataPopup
-  _isLoad: 1
   _gameDataSlots:
   - _chapterText: {fileID: 535661978}
     _ddayText: {fileID: 871245896}
@@ -7666,6 +7709,7 @@ MonoBehaviour:
     _ddayText: {fileID: 1749710186}
   - _chapterText: {fileID: 516399027}
     _ddayText: {fileID: 531656584}
+  _dialogueData: {fileID: 11400000, guid: fb4652b806b737a4c873499679ccdd63, type: 2}
 --- !u!1 &1988161833
 GameObject:
   m_ObjectHideFlags: 0
@@ -8015,7 +8059,7 @@ GameObject:
   - component: {fileID: 2068833641}
   - component: {fileID: 2068833643}
   m_Layer: 0
-  m_Name: PlayerInputManager
+  m_Name: InputManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8225,6 +8269,7 @@ SceneRoots:
   - {fileID: 2068833642}
   - {fileID: 481613198}
   - {fileID: 1517072617}
+  - {fileID: 631259769}
   - {fileID: 1426878330}
   - {fileID: 1122403700}
   - {fileID: 1033459427}

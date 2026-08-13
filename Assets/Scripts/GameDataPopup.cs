@@ -18,8 +18,10 @@ public class GameDataSlot
 
 public class GameDataPopup : MonoBehaviour
 {
-    [SerializeField] private bool _isLoad = true; // 저장/불러오기 모드
+    [ReadOnly] private bool _isLoad = true; // 저장/불러오기 모드
     [SerializeField] private GameDataSlot[] _gameDataSlots; // 게임 데이터 슬롯들을 배열로 관리
+
+    [SerializeField] private DialogueData _dialogueData; // 슬롯에 표시할 DialogueData
 
     public void OpenPopup(bool isLoad)
     {
@@ -38,17 +40,26 @@ public class GameDataPopup : MonoBehaviour
     {
         if (_isLoad)
         {
-            DataManager.Instance.SaveGameData(DataManager.Instance.currentSaveData, slotIndex);
-            Debug.Log($"게임 데이터가 {slotIndex}번 슬롯에 저장되었습니다.");
-            RefreshSlots(); // 저장 후 슬롯을 새로고침하여 변경 사항 반영
-        }
-        else
-        {
             // 로드 모드일 때: 데이터 로드 확인 팝업 띄우기 -> 씬 전환/데이터 로드
+            if (DataManager.Instance.PeekGameData(slotIndex) == null)
+            {
+                Debug.Log($"선택한 슬롯 {slotIndex}에는 저장된 데이터가 없습니다.");
+                return; // 저장된 데이터가 없는 경우 로드하지 않음
+            }
             DataManager.Instance.LoadGameData(slotIndex);
             Debug.Log($"게임 데이터가 {slotIndex}번 슬롯에서 로드되었습니다.");
             // 씬 전환 또는 필요한 후속 작업 수행
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            LoadingSceneController.Instance.LoadScene(SceneNames.InvestigationScene, () =>
+            {
+                DialogueDataReceiver.Instance.InitializeData(_dialogueData, true); // 예시: DialogueDataReceiver를 통해 씬 초기화
+            });
+        }
+        else
+        {
+            DataManager.Instance.SaveGameData(DataManager.Instance.currentSaveData, slotIndex);
+            Debug.Log($"게임 데이터가 {slotIndex}번 슬롯에 저장되었습니다.");
+            RefreshSlots(); // 저장 후 슬롯을 새로고침하여 변경 사항 반영
         }
     }
 

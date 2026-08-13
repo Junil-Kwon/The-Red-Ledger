@@ -1,54 +1,53 @@
 ﻿EXTERNAL PlayBGM(string)
 EXTERNAL PlaySFX(string)
-EXTERNAL PlayCutScene(string, bool)
-//EXTERNAL SystemNotify(string)
+EXTERNAL PlayCutScene(string, bool, bool)
 
 -> Scene_001
 
 === Scene_001 ===
-~PlayCutScene("FadeIn", false)
+~PlayCutScene("FadeIn", false, false)
 ~PlaySFX("코고는 소리")
 
-장난감 병정 이야기를 읽어 본 적 있는가. # name: NAR
+장난감 병정 이야기를 읽어 본 적 있는가. # name: NAR # speaker: 0
 
-어릴 적, 잠들기 싫은 밤이면 # name: NAR
-어머니는 항상 그 이야기를 읽어주셨다. # name: NAR
+어릴 적, 잠들기 싫은 밤이면 # name: NAR # speaker: 0
+어머니는 항상 그 이야기를 읽어주셨다. # name: NAR # speaker: 0
 
-다리가 하나 없어도 꿋꿋했다. # name: NAR
-타오르는 불길 속에서도 자세를 잃지 않았다. # name: NAR
+다리가 하나 없어도 꿋꿋했다. # name: NAR # speaker: 0
+타오르는 불길 속에서도 자세를 잃지 않았다. # name: NAR # speaker: 0
 
-하나가 없어도 더 단단히 서 있는 것 # name: NAR
-부서진 채로도 꺼지지 않는 것. # name: NAR
+하나가 없어도 더 단단히 서 있는 것 # name: NAR # speaker: 0
+부서진 채로도 꺼지지 않는 것. # name: NAR # speaker: 0
 
-그 시절의 나는 그런 것들이 # name: NAR
-세상에서 가장 빛나는 모습이라고 믿었다. # name: NAR
+그 시절의 나는 그런 것들이 # name: NAR # speaker: 0
+세상에서 가장 빛나는 모습이라고 믿었다. # name: NAR # speaker: 0
 
-그리고 아버지가 돌아가시던 날, # name: NAR
-나는 처음으로 깨달았다. # name: NAR
+그리고 아버지가 돌아가시던 날, # name: NAR # speaker: 0
+나는 처음으로 깨달았다. # name: NAR # speaker: 0
 
-나는 특별하지 않다는 것을. # name: NAR
+나는 특별하지 않다는 것을. # name: NAR # speaker: 0
 
-~PlayCutScene("FadeOut", true)
+~PlayCutScene("FadeOut", false, true)
 
-또 그 시절 꿈을 꿨다. # name: DEMIAN
+또 그 시절 꿈을 꿨다. # name: DEMIAN # speaker: 2
 
-(연출) 데미안이 천천히 몸을 일으킨다. # name: NAR
+(연출) 데미안이 천천히 몸을 일으킨다. # name: NAR # speaker: 2
 
-이곳에 온 지 닷새째. # name: DEMIAN
-해가 뜨고 지는 걸 그만큼 봤으니까 # name: DEMIAN
+이곳에 온 지 닷새째. # name: DEMIAN # speaker: 2
+해가 뜨고 지는 걸 그만큼 봤으니까 # name: DEMIAN # speaker: 2
 
-삼일 전에 등을 두들겨 맞은 덕분에 # name: DEMIAN
-이틀 연속으로 이 시간에 눈이 떠진다. # name: DEMIAN
+삼일 전에 등을 두들겨 맞은 덕분에 # name: DEMIAN # speaker: 2
+이틀 연속으로 이 시간에 눈이 떠진다. # name: DEMIAN # speaker: 2
 
-(연출) 데미안이 달빛이 드는 창 쪽을 바라본다. # name: NAR
+(연출) 데미안이 달빛이 드는 창 쪽을 바라본다. # name: NAR # speaker: 2
 
-잡혀 오기 직전, 나는 비틀리에씨의 공방 뒤쪽 창고에서 트리미안국으로 넘어가려는 모자를 막 떠나보내고 있었다. # name: DEMIAN
+잡혀 오기 직전, 나는 비틀리에씨의 공방 뒤쪽 창고에서 트리미안국으로 넘어가려는 모자를 막 떠나보내고 있었다. # name: DEMIAN # speaker: 2
 
-뒤총수를 가격당하는 순간 내 머릿속을 스친 건 — # name: DEMIAN
+뒤총수를 가격당하는 순간 내 머릿속을 스친 건 — # name: DEMIAN # speaker: 2
 
-"이번 의뢰금은 써보지도 못하고 뺏기겠네." # name: DEMIAN
+"이번 의뢰금은 써보지도 못하고 뺏기겠네." # name: DEMIAN # speaker: 2
 
-국가보안 및 체제 무결성 위반. # name: DEMIAN
+국가보안 및 체제 무결성 위반. # name: DEMIAN 
 수감번호 1409. # name: DEMIAN
 
 심문 구조는 간단했다. # name: DEMIAN
@@ -77,7 +76,7 @@ EXTERNAL PlayCutScene(string, bool)
 
 (연출) 빛이 쏟아진다. # name: NAR
 
-~PlayCutScene("FadeInWhite", true)
+~PlayCutScene("FadeInWhite", true, true)
 
 -> END
 

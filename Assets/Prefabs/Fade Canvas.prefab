@@ -162,7 +162,7 @@ GameObject:
   - component: {fileID: 552302290512054911}
   - component: {fileID: 7322696102492749627}
   m_Layer: 0
-  m_Name: Background
+  m_Name: BG
   m_TagString: NoneFunctionalUI
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -346,6 +346,7 @@ MonoBehaviour:
   _boxes:
   - {fileID: 372474373358055760}
   _fadeDuration: 1
+  _backgroundImage: {fileID: 7322696102492749627}
 --- !u!225 &6018231906757104039
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -354,7 +355,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8038631056393685654}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 0
   m_IgnoreParentGroups: 0

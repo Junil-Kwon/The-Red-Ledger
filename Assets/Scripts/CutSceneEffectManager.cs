@@ -31,7 +31,7 @@ public class CutSceneEffectManager : MonoBehaviour
         }
     }
     */
-
+    /*
     public async Task<FadeCutScene> GetFadeCutSceneAsync()
     {
         if (_fadeCutScene == null)
@@ -61,7 +61,25 @@ public class CutSceneEffectManager : MonoBehaviour
 
         return _fadeCutScene;
     }
+    */
 
+    public FadeCutScene GetFadeCutScene()
+    {
+        if (_fadeCutScene == null)
+        {
+            _fadeCutScene = FindAnyObjectByType<FadeCutScene>();
+            if (_fadeCutScene == null)
+            {
+                GameObject prefab = Addressables.LoadAssetAsync<GameObject>(_fadePrefabAddress).WaitForCompletion();
+                GameObject go = Instantiate(prefab);
+                _fadeCutScene = go.GetComponent<FadeCutScene>();
+            }
+        }
+        return _fadeCutScene;
+    }
+
+    // 비동기적 실행
+    /*
     public async void PlayCutScene(CutSceneType type, bool mode = true)
     {
         switch (type)
@@ -80,6 +98,33 @@ public class CutSceneEffectManager : MonoBehaviour
                 // FadeInWhite 컷씬 효과 실행
                 _fadeCutScene = await GetFadeCutSceneAsync();
                 _fadeCutScene.Show(isFade : mode, isWhite : true);
+                break;
+            default:
+                Debug.LogWarning("Unknown CutSceneType: " + type);
+                break;
+        }
+    }
+    */
+
+    // 동기적 실행
+    public void PlayCutScene(CutSceneType type, bool mode1 = true, bool mode2 = true)
+    {
+        switch (type)
+        {
+            case CutSceneType.FadeIn:
+                // FadeIn 컷씬 효과 실행
+                _fadeCutScene = GetFadeCutScene();
+                _fadeCutScene.Show(isAlphaZero: mode1, isFade : mode2);
+                break;
+            case CutSceneType.FadeInWhite:
+                // FadeInWhite 컷씬 효과 실행
+                _fadeCutScene = GetFadeCutScene();
+                _fadeCutScene.Show(isAlphaZero: mode1, isFade : mode2, isWhite : true);
+                break;
+            case CutSceneType.FadeOut:
+                // FadeOut 컷씬 효과 실행
+                _fadeCutScene = GetFadeCutScene();
+                _fadeCutScene.Hide(isAlphaZero: mode1, isFade : mode2);
                 break;
             default:
                 Debug.LogWarning("Unknown CutSceneType: " + type);

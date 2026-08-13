@@ -14,7 +14,7 @@ public class FadeCutScene : MonoBehaviour
     private TextBoxLayer _layer;
     private Sequence _fadeSequence;
 
-    public void Show(bool isFade = true, bool isWhite = false)
+    public void Show(bool isAlphaZero = false, bool isFade = true, bool isWhite = false)
     {
         if (_layer != null)
         {
@@ -31,6 +31,7 @@ public class FadeCutScene : MonoBehaviour
         }
 
         dialogueManager.SetDefaultTextColor(isWhite ? Color.black : Color.white); // 텍스트 색상 설정
+        GetComponent<CanvasGroup>().alpha = isAlphaZero ? 0f : 1f; // 초기 알파값 설정
         _backgroundImage.color = isWhite ? Color.white : Color.black;
         gameObject.SetActive(true);
         dialogueManager.SetCutSceneProcessing(true); // 컷씬 진행 중임을 알림
@@ -67,7 +68,7 @@ public class FadeCutScene : MonoBehaviour
         }
     }
 
-    public void Hide(bool isFade = true, bool isWhite = false)
+    public void Hide(bool isAlphaZero = true, bool isFade = true, bool isWhite = false)
     {
         if (_layer == null)
         {
@@ -103,7 +104,7 @@ public class FadeCutScene : MonoBehaviour
         else
         {
             // 즉시 표시일 때는 트윈 시스템을 전혀 쓰지 않음
-            GetComponent<CanvasGroup>().alpha = 0f;
+            GetComponent<CanvasGroup>().alpha = isAlphaZero ? 0f : 1f;
             gameObject.SetActive(false);
             dialogueManager.SetCutSceneProcessing(false);
             _fadeSequence = default; // 또는 null 처리 (구조에 따라 지정)

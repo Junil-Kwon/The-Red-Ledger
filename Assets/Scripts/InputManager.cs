@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
-public class PlayerInputManager : Singleton<PlayerInputManager>
+public class InputManager : Singleton<InputManager>
 {
     /*
     // 다른 곳에서 evnt를 직접 Invoke 하는것을 막아준다

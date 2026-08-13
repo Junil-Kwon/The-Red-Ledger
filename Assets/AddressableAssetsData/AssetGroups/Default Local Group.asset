@@ -15,6 +15,11 @@ MonoBehaviour:
   m_GroupName: Default Local Group
   m_GUID: 264badc5106261748ab9b8c1d9c4ff3a
   m_SerializeEntries:
+  - m_GUID: 9fe9441608c855041a3b68b56da2a24b
+    m_Address: Assets/Prefabs/LoadingUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ea9fd6467312ddf47adb22f34ef815d9
     m_Address: Assets/Prefabs/Fade Canvas.prefab
     m_ReadOnly: 0

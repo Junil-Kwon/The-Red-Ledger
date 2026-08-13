@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -16,33 +14,21 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         get
         {
-            // 앱이 종료 중이라면 새로운 인스턴스를 만들지 않고 null 반환
+            // 앱이 완전히 종료되는 중이면 null 반환 (에디터 플레이 종료 시 에러 방지)
             if (_isQuitting) return null;
-            
+
             if (_instance == null)
             {
                 _instance = FindAnyObjectByType<T>();
+
                 if (_instance == null)
                 {
                     GameObject container = new GameObject(typeof(T).Name);
                     _instance = container.AddComponent<T>();
-                    DontDestroyOnLoad(container);
                 }
             }
             return _instance;
         }
-    }
-
-    // 앱 종료 시 플래그 설정
-    protected virtual void OnApplicationQuit()
-    {
-        _isQuitting = true;
-    }
-    
-    protected virtual void OnDestroy()
-    {
-        // 에디터에서 플레이 모드를 끌 때도 안전하게 처리
-        _isQuitting = true;
     }
 
     protected virtual void Awake()
@@ -55,18 +41,28 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
         if (_instance == null)
         {
             _instance = this as T;
-        }
-
-        if (_instance == this)
-        {
-            // 이미 Instance 프로퍼티를 통해 나 자신으로 설정된 경우라도 
-            // 여기서 파괴 방지를 한 번 더 보장해줍니다.
             DontDestroyOnLoad(gameObject);
         }
-        else
+        else if (_instance != this)
         {
-            // 정말로 중복된 다른 객체라면 파괴
+            // 중복으로 생성된 씬의 오브젝트 삭제
             Destroy(gameObject);
+        }
+    }
+
+    // 앱이 실제 종료될 때만 플래그 설정
+    protected virtual void OnApplicationQuit()
+    {
+        _isQuitting = true;
+    }
+
+    protected virtual void OnDestroy()
+    {
+        // 중복 객체가 삭제될 때 _isQuitting을 건드리지 않도록 함
+        // 자신이 진짜 싱글톤 인스턴스였을 때만 static 참조 해제
+        if (_instance == this)
+        {
+            _instance = null;
         }
     }
 }

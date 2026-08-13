@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70a42a18bcc35234aaf06cb03fa798f7, type: 3}
+  m_Name: New Dialogue Data
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueData
+  inkJSON: {fileID: 4900000, guid: 234117dad62df3d449c087f1537af661, type: 3}
+  backgroundImage: {fileID: 5088316998373936774, guid: b30c0751e35f8504caad3111faae4873, type: 3}
+  characters:
+  - Key: {fileID: 0}
+    Value: {x: 0, y: 0, z: 0}
+  - Key: {fileID: 0}
+    Value: {x: 0, y: 0, z: 0}
+  bgm: {fileID: 0}
