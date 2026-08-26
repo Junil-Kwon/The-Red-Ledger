@@ -26,7 +26,7 @@ public class DialogueData : ScriptableObject
     public Sprite backgroundImage; // 배경 이미지
 
     [Header("캐릭터 이미지 및 위치(기본 좌측부터)")]
-    public List<Pair<Sprite, Vector3>> characters; // 캐릭터 이미지 및 위치 배열
+    public List<Pair<Sprite, Vector3>> characterInfos; // 캐릭터 이미지 및 위치 배열
     
     [Header("사운드")]
     public AudioClip bgm; // 대화 시작 시 재생할 BGM

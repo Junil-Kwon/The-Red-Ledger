@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5907096529641433544}
   m_Layer: 0
   m_Name: Text (TMP)
-  m_TagString: NoneFunctionalUI
+  m_TagString: DialogueTextBox
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -343,10 +343,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3ce4e2fa532d104cb25a91ad99c9b1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FadeCutScene
-  _boxes:
+  _textBoxes:
   - {fileID: 372474373358055760}
   _fadeDuration: 1
   _backgroundImage: {fileID: 7322696102492749627}
+  _modeConfigs:
+  - isFade: 1
+    isWhite: 0
+  - isFade: 0
+    isWhite: 0
+  - isFade: 1
+    isWhite: 1
+  - isFade: 0
+    isWhite: 1
 --- !u!225 &6018231906757104039
 CanvasGroup:
   m_ObjectHideFlags: 0

@@ -46,13 +46,13 @@ public class GameDataPopup : MonoBehaviour
                 Debug.Log($"선택한 슬롯 {slotIndex}에는 저장된 데이터가 없습니다.");
                 return; // 저장된 데이터가 없는 경우 로드하지 않음
             }
-            DataManager.Instance.LoadGameData(slotIndex);
-            Debug.Log($"게임 데이터가 {slotIndex}번 슬롯에서 로드되었습니다.");
             // 씬 전환 또는 필요한 후속 작업 수행
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             LoadingSceneController.Instance.LoadScene(SceneNames.InvestigationScene, () =>
             {
-                DialogueDataReceiver.Instance.InitializeData(_dialogueData, true); // 예시: DialogueDataReceiver를 통해 씬 초기화
+                //DialogueManager.Instance.SetDialogue(_dialogueData);
+                DataManager.Instance.LoadGameData(slotIndex);
+                Debug.Log($"게임 데이터가 {slotIndex}번 슬롯에서 로드되었습니다.");
             });
         }
         else

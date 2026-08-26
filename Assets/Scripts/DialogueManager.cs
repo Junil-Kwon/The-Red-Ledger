@@ -1,23 +1,21 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Ink.Runtime;
-using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using TMPro;
 using StoryFlags; // StoryFlag enum이 정의된 네임스페이스를 임포트
 
-public class DialogueManager : MonoBehaviour
+public class DialogueManager : Singleton<DialogueManager>
 {
     [Header("Ink")]
-    [SerializeField] private TextAsset _inkJSON;
+    //[SerializeField] private TextAsset _inkJSON;
+    private DialogueData _dialogueData;
     private Story _story;
     
     [Header("Speaker UI Elements")]
-    [SerializeField] private GameObject _playerSpeechPanel;
-    [SerializeField] private List<GameObject> _textBoxes = new List<GameObject>();
     [SerializeField] private List<GameObject> _currentChoices = new List<GameObject>();
     //[SerializeField] private GameObject choiceButtonPrefab;
     //[SerializeField] private Transform choiceContainer;
@@ -25,7 +23,7 @@ public class DialogueManager : MonoBehaviour
     [Header("Dialogue Settings")]
     [SerializeField] private float _textSpeed = 0.05f;
 
-    private int _speakerIndex = 0;
+    private int _textBoxIndex = 0;
     private Color _defaultTextColor = Color.black;
     private Color _nextTextColor = Color.clear;
     private string _processedText;
@@ -37,7 +35,7 @@ public class DialogueManager : MonoBehaviour
 
     private InkStatusManager _inkStatusManager;
     private TextBoxRouter _textBoxRouter;
-    private CutSceneEffectManager _cutsceneEffectManager;
+    private CutSceneManager _cutsceneEffectManager;
 
     public InkStatusManager InkStatusManager
     {
@@ -55,6 +53,7 @@ public class DialogueManager : MonoBehaviour
             return _inkStatusManager;
         }
     }
+    /*
     public TextBoxRouter TextBoxRouter
     {
         get
@@ -71,17 +70,18 @@ public class DialogueManager : MonoBehaviour
             return _textBoxRouter;
         }
     }
-    public CutSceneEffectManager CutSceneEffectManager
+    */
+    public CutSceneManager CutSceneEffectManager
     {
         get
         {
             if (_cutsceneEffectManager == null)
             {
-                _cutsceneEffectManager = FindAnyObjectByType<CutSceneEffectManager>();
+                _cutsceneEffectManager = FindAnyObjectByType<CutSceneManager>();
                 if (_cutsceneEffectManager == null)
                 {
-                    Debug.Log("CutSceneEffectManager가 씬에 없습니다. 새로 생성합니다.");
-                    _cutsceneEffectManager = new GameObject("CutSceneEffectManager").AddComponent<CutSceneEffectManager>();
+                    Debug.Log("CutSceneManager가 씬에 없습니다. 새로 생성합니다.");
+                    _cutsceneEffectManager = new GameObject("CutSceneManager").AddComponent<CutSceneManager>();
                 }
             }
             return _cutsceneEffectManager;
@@ -106,8 +106,9 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
-    void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         //inkStatusManager = FindAnyObjectByType<InkStatusManager>();
     }
     
@@ -163,11 +164,18 @@ public class DialogueManager : MonoBehaviour
 
     // =================== 대화 시스템 methods ===================
 
-    public void SetInkJSON(TextAsset inkJSON)
+    public void SetDialogue(DialogueData dialogueData)
     {
-        _inkJSON = inkJSON;
-        InitializeStory();
+        if (dialogueData == null)
+        {
+            Debug.LogError("DialogueData가 null입니다. 대화를 시작할 수 없습니다.");
+            return;
+        }
 
+        _dialogueData = dialogueData;
+        InitializeStory(_dialogueData.inkJSON);
+
+        /*
         ITextBoxTarget[] textBoxTargets = FindObjectsByType<MonoBehaviour>().OfType<ITextBoxTarget>().ToArray();
         Debug.Log($"발견된 ITextBoxTarget 개수: {textBoxTargets.Length}");
         //말풍선 구독
@@ -176,8 +184,68 @@ public class DialogueManager : MonoBehaviour
             //Debug.Log($"{i}번째 말풍선 등록: {_textBoxes[i].name}");
             TextBoxRouter.RegisterTextBox(i, textBoxTargets[i]);
         }
+        */
+        
+        TextMeshProUGUI textBox = GameObject.FindWithTag("DialogueTextBox")?.GetComponent<TextMeshProUGUI>();
+        TextBoxRouter.Instance.BeginLayer("baseLayer"); // 기본 레이어 시작
 
-        StartDialogue();
+        if (textBox != null)
+        {
+            TextBoxRouter.Instance.RegisterTextBox(0, textBox);
+        }
+        else
+        {
+            Debug.LogWarning("TextBox 태그가 지정된 GameObject를 찾을 수 없습니다.");
+            return;
+        }
+
+        InitializeSceneElements(_dialogueData);
+    }
+
+    private void InitializeSceneElements(DialogueData dialogueData)
+    {
+        if (dialogueData.backgroundImage != null)
+        {
+            var backgroundImage = GameObject.Find("Background").GetComponent<SpriteRenderer>();
+            if (backgroundImage != null)
+            {
+                backgroundImage.sprite = dialogueData.backgroundImage;
+            }
+            else
+            {
+                Debug.LogError("Background GameObject not found!");
+            }
+        }
+
+        // 캐릭터 이미지 및 위치 설정
+        for (int i = 0; i < dialogueData.characterInfos.Count; i++)
+        {
+            var characterPair = dialogueData.characterInfos[i];
+            var characterGO = GameObject.Find($"Character{i + 1}"); // 추후에는 캐릭터 오브젝트를 생성할 수 있도록 수정
+            if (characterGO != null)
+            {
+                var characterSpriteRenderer = characterGO.GetComponent<SpriteRenderer>();
+                if (characterSpriteRenderer != null)
+                {
+                    characterSpriteRenderer.sprite = characterPair.Key;
+                    characterGO.transform.position = characterPair.Value;
+                }
+                else
+                {
+                    Debug.LogError($"Character{i + 1} GameObject에 SpriteRenderer가 없습니다.");
+                }
+            }
+            else
+            {
+                Debug.LogError($"Character{i + 1} GameObject를 찾을 수 없습니다.");
+            }
+        }
+
+        // BGM 재생
+        if (dialogueData.bgm != null)
+        {
+            //SoundManager.Instance.PlayBGM(dialogueData.bgm);
+        }
     }
 
     public void SetCutSceneProcessing(bool isProcessing)
@@ -192,7 +260,7 @@ public class DialogueManager : MonoBehaviour
 
     private void InitFields()
     {
-        _speakerIndex = 0;
+        _textBoxIndex = 0;
         _nextTextColor = Color.black;
     }
 
@@ -212,14 +280,15 @@ public class DialogueManager : MonoBehaviour
         _currentChoices[choiceIndex].GetComponent<Button>().onClick.Invoke(); // 해당 선택지 버튼의 클릭 이벤트 강제 호출
     }
     
-    void InitializeStory()
+    void InitializeStory(TextAsset inkJSON)
     {
-        if (_inkJSON == null)
+        if (inkJSON == null)
         {
             Debug.LogWarning("Ink JSON 파일이 할당되지 않았습니다.");
+            _story = null;
             return;
         }
-        _story = new Story(_inkJSON.text);
+        _story = new Story(inkJSON.text);
         _story.onError += OnStoryError;
         BindExternalFunctions();
     }
@@ -262,11 +331,11 @@ public class DialogueManager : MonoBehaviour
             */
         });
 
-        _story.BindExternalFunction("PlayCutScene", (string cutSceneType, bool mode1, bool mode2) => {
+        _story.BindExternalFunction("PlayCutScene", (string cutSceneType) => {
             Debug.Log($"PlayCutScene called with: {cutSceneType}");
-            if (Enum.TryParse(cutSceneType, true, out CutSceneEffectManager.CutSceneType type))
+            if (Enum.TryParse(cutSceneType, true, out CutSceneManager.CutSceneType type))
             {
-                CutSceneEffectManager.PlayCutScene(type, mode1, mode2);
+                CutSceneEffectManager.PlayCutScene(type);
             }
             else
             {
@@ -322,7 +391,7 @@ public class DialogueManager : MonoBehaviour
         });
     }
     
-    public void StartDialogue()
+    public void PlayDialogue()
     {
         if (_story == null)
         {
@@ -346,7 +415,7 @@ public class DialogueManager : MonoBehaviour
             yield return null;
             yield return new WaitUntil(() => _cutSceneProcessing == false); // 대기 시간 적용 여부 확인
 
-            // ⭐ [수정된 부분] 빈 문자열(엔터 등)일 경우 클릭 대기를 건너뛰고 바로 다음으로 진행
+            // 빈 문자열(엔터 등)일 경우 클릭 대기를 건너뛰고 바로 다음으로 진행
             if (string.IsNullOrEmpty(_processedText))
             {
                 continue; 
@@ -389,42 +458,48 @@ public class DialogueManager : MonoBehaviour
 
     IEnumerator TypeText(string text)
     {
-        ITextBoxTarget target = TextBoxRouter.GetTextBox(_speakerIndex);
+        //ITextBoxTarget target = TextBoxRouter.GetTextBox(_speakerIndex);
+        TextMeshProUGUI target = TextBoxRouter.Instance.GetTextBox(_textBoxIndex);
         if (target == null)
         {
-            Debug.LogError($"speaker {_speakerIndex}에 등록된 텍스트박스가 없습니다.");
+            Debug.LogError($"textBox {_textBoxIndex}에 등록된 텍스트박스가 없습니다.");
             yield break;
         }
 
-        target.BubbleInit();
+        //target.BubbleInit();
+        target.text = ""; // 말풍선 초기화
         string tmpText = "";
         if (_nextTextColor == Color.clear) 
         {
-            target.SetTextColor(_defaultTextColor); // 기본 색상 설정
+            //target.SetTextColor(_defaultTextColor); // 기본 색상 설정
+            target.color = _defaultTextColor; // 기본 색상 설정
         }
         else 
         {
-            target.SetTextColor(_nextTextColor);
+            //target.SetTextColor(_nextTextColor);
+            target.color = _nextTextColor;
             _nextTextColor = Color.clear; // 텍스트 색상 초기화
         }
 
         for (int i = 0; i < text.Length; i++)
         {
             tmpText += text[i];
-            target.UpdateBubble(tmpText);
+            //target.UpdateBubble(tmpText);
+            target.text = tmpText;
             yield return new WaitForSeconds(_textSpeed);
 
             if (_diagLineSkipFlag)
             {
                 _diagLineSkipFlag = false;
                 tmpText = text;
-                target.UpdateBubble(tmpText);
-                _speakerIndex = 0; // 스피커 인덱스 초기화
+                //target.UpdateBubble(tmpText);
+                target.text = tmpText;
+                _textBoxIndex = 0; // 스피커 인덱스 초기화
                 _nextTextColor = Color.clear;
                 yield break;
             }
         }
-        _speakerIndex = 0; // 스피커 인덱스 초기화
+        _textBoxIndex = 0; // 스피커 인덱스 초기화
         _nextTextColor = Color.clear; // 텍스트 색상 초기화
     }
     
@@ -452,7 +527,8 @@ public class DialogueManager : MonoBehaviour
         {
             case "speaker":
                 // 화자 변경
-                _speakerIndex = int.Parse(value);
+                //_speakerIndex = int.Parse(value);
+                _textBoxIndex = 0; // 현재는 단일 말풍선만 사용하므로 항상 0으로 설정
                 break;
             case "name":
                 // 화자 이름 변경

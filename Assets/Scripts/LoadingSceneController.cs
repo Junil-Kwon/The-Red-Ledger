@@ -67,11 +67,11 @@ public class LoadingSceneController : MonoBehaviour
     private string mLoadSceneName;
     Action mOnSceneLoadAction;
 
-    public void LoadScene(int sceneIndex, Action action = null)
+    public void LoadScene(int sceneIndex, Action OnLoadaction = null)
     {
         gameObject.SetActive(true);
         SceneManager.sceneLoaded += OnSceneLoaded;
-        mOnSceneLoadAction = action;
+        mOnSceneLoadAction = OnLoadaction;
 
         string scenePath = SceneUtility.GetScenePathByBuildIndex(sceneIndex);
         string sceneName = System.IO.Path.GetFileNameWithoutExtension(scenePath);
@@ -82,11 +82,11 @@ public class LoadingSceneController : MonoBehaviour
         StartCoroutine(CoLoadSceneProcess());
     }
     
-    public void LoadScene(string sceneName, Action action = null)
+    public void LoadScene(string sceneName, Action OnLoadaction = null)
     {
         gameObject.SetActive(true);
         SceneManager.sceneLoaded += OnSceneLoaded;
-        mOnSceneLoadAction = action;
+        mOnSceneLoadAction = OnLoadaction;
 
         mLoadSceneName = sceneName;
 

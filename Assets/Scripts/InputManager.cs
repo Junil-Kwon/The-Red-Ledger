@@ -110,7 +110,7 @@ public class InputManager : Singleton<InputManager>
 
         foreach (var result in results)
         {
-            if (result.gameObject.tag != "NoneFunctionalUI")
+            if (result.gameObject.tag is not ("NoneFunctionalUI" or "DialogueTextBox"))
             {
                 return true; // UI 위에 마우스가 있는 것
             }

@@ -1,11 +1,11 @@
 ﻿EXTERNAL PlayBGM(string)
 EXTERNAL PlaySFX(string)
-EXTERNAL PlayCutScene(string, bool, bool)
+EXTERNAL PlayCutScene(string)
 
 -> Scene_001
 
 === Scene_001 ===
-~PlayCutScene("FadeIn", false, false)
+~PlayCutScene("FadeInIMD")
 ~PlaySFX("코고는 소리")
 
 장난감 병정 이야기를 읽어 본 적 있는가. # name: NAR # speaker: 0
@@ -27,7 +27,7 @@ EXTERNAL PlayCutScene(string, bool, bool)
 
 나는 특별하지 않다는 것을. # name: NAR # speaker: 0
 
-~PlayCutScene("FadeOut", false, true)
+~PlayCutScene("FadeOutSTD")
 
 또 그 시절 꿈을 꿨다. # name: DEMIAN # speaker: 2
 
@@ -76,7 +76,7 @@ EXTERNAL PlayCutScene(string, bool, bool)
 
 (연출) 빛이 쏟아진다. # name: NAR
 
-~PlayCutScene("FadeInWhite", true, true)
+~PlayCutScene("FadeInWhiteSTD")
 
 -> END
 
