@@ -60,7 +60,7 @@ public class DialogueDataReceiver : Singleton<DialogueDataReceiver>
             // 배경 이미지 설정
             if (dialogueData.backgroundImage != null)
             {
-                var backgroundImage = GameObject.Find("Background").GetComponent<SpriteRenderer>(); // 배경 이미지 GameObject를 찾아서 Image 컴포넌트 가져오기
+                var backgroundImage = GameObject.FindWithTag("BackgroundImg").GetComponent<SpriteRenderer>(); // 배경 이미지 GameObject를 찾아서 Image 컴포넌트 가져오기
                 if (backgroundImage != null)
                 {
                     backgroundImage.sprite = dialogueData.backgroundImage;

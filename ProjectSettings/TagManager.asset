@@ -6,6 +6,7 @@ TagManager:
   tags:
   - NoneFunctionalUI
   - DialogueTextBox
+  - BackgroundImg
   layers:
   - Default
   - TransparentFX

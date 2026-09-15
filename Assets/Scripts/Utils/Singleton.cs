@@ -23,6 +23,7 @@ public abstract class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 
                 if (_instance == null)
                 {
+                    // 싱글톤이 존재하지 않으면 새로 생성
                     GameObject container = new GameObject(typeof(T).Name);
                     _instance = container.AddComponent<T>();
                 }

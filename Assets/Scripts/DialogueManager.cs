@@ -27,66 +27,11 @@ public class DialogueManager : Singleton<DialogueManager>
     private Color _defaultTextColor = Color.black;
     private Color _nextTextColor = Color.clear;
     private string _processedText;
-    private Coroutine _typingCoroutine;
-    private bool _diagWaitingForAdvance = false;
-    private bool _diagAdvanceRequested = false;
-    private bool _diagLineSkipFlag = false; // 타이핑 스킵 플래그
-    private bool _cutSceneProcessing = false; // 컷씬 진행 중인지 여부
+    private bool _isTyping = false;
+    private bool _isWaitingForAdvance = false;
+    private ETutorialPopupType? _pendingPopupAfterAdvance;
 
-    private InkStatusManager _inkStatusManager;
-    private TextBoxRouter _textBoxRouter;
-    private CutSceneManager _cutsceneEffectManager;
-
-    public InkStatusManager InkStatusManager
-    {
-        get
-        {
-            if (_inkStatusManager == null)
-            {
-                _inkStatusManager = FindAnyObjectByType<InkStatusManager>();
-                if (_inkStatusManager == null)
-                {
-                    Debug.Log("InkStatusManager가 씬에 없습니다. 새로 생성합니다.");
-                    _inkStatusManager = new GameObject("InkStatusManager").AddComponent<InkStatusManager>();
-                }
-            }
-            return _inkStatusManager;
-        }
-    }
-    /*
-    public TextBoxRouter TextBoxRouter
-    {
-        get
-        {
-            if (_textBoxRouter == null)
-            {
-                _textBoxRouter = FindAnyObjectByType<TextBoxRouter>();
-                if (_textBoxRouter == null)
-                {
-                    Debug.Log("TextBoxRouter가 씬에 없습니다. 새로 생성합니다.");
-                    _textBoxRouter = new GameObject("TextBoxRouter").AddComponent<TextBoxRouter>();
-                }
-            }
-            return _textBoxRouter;
-        }
-    }
-    */
-    public CutSceneManager CutSceneEffectManager
-    {
-        get
-        {
-            if (_cutsceneEffectManager == null)
-            {
-                _cutsceneEffectManager = FindAnyObjectByType<CutSceneManager>();
-                if (_cutsceneEffectManager == null)
-                {
-                    Debug.Log("CutSceneManager가 씬에 없습니다. 새로 생성합니다.");
-                    _cutsceneEffectManager = new GameObject("CutSceneManager").AddComponent<CutSceneManager>();
-                }
-            }
-            return _cutsceneEffectManager;
-        }
-    }
+    private bool _isEventPlaying = false; // 이벤트 진행 중인지 여부
 
     void OnEnable()
     {
@@ -132,24 +77,24 @@ public class DialogueManager : Singleton<DialogueManager>
     {
         //Debug.Log("HandleClick called");
 
-        if (InputManager.Instance.IsPointerOverUIWhenClick() || _cutSceneProcessing)
-            return; // UI 위에서 클릭한 경우 또는 컷씬 연출 진행 중일 때 대화 진행 방지
+        if (InputManager.Instance.IsPointerOverUIWhenClick() || _isEventPlaying)
+            return; // UI 위에서 클릭한 경우 또는 이벤트 진행 중일 때 대화 진행 방지
 
-        skipLine(_diagWaitingForAdvance);
+        SkipLine();
     }
 
     private void HandleInteract(InputAction.CallbackContext ctx)
     {
         //Debug.Log("HandleInteraction called");
 
-        if (_cutSceneProcessing)
-            return; // 컷씬 연출 진행 중일 때는 상호작용 무시
+        if (_isEventPlaying)
+            return; // 이벤트 진행 중일 때는 상호작용 무시
 
         switch(ctx.control.displayName)
         {
             case "Space":
             case "Enter":
-                skipLine(_diagWaitingForAdvance);
+                SkipLine();
                 break;
             case "1":
             case "2":
@@ -206,7 +151,7 @@ public class DialogueManager : Singleton<DialogueManager>
     {
         if (dialogueData.backgroundImage != null)
         {
-            var backgroundImage = GameObject.Find("Background").GetComponent<SpriteRenderer>();
+            var backgroundImage = GameObject.FindWithTag("BackgroundImg").GetComponent<SpriteRenderer>();
             if (backgroundImage != null)
             {
                 backgroundImage.sprite = dialogueData.backgroundImage;
@@ -216,6 +161,7 @@ public class DialogueManager : Singleton<DialogueManager>
                 Debug.LogError("Background GameObject not found!");
             }
         }
+        else Debug.Log("DialogueData에 배경 이미지가 할당되지 않았습니다.");
 
         // 캐릭터 이미지 및 위치 설정
         for (int i = 0; i < dialogueData.characterInfos.Count; i++)
@@ -248,9 +194,9 @@ public class DialogueManager : Singleton<DialogueManager>
         }
     }
 
-    public void SetCutSceneProcessing(bool isProcessing)
+    public void SetEventPlaying(bool isPlaying)
     {
-        _cutSceneProcessing = isProcessing;
+        _isEventPlaying = isPlaying;
     }
 
     public void SetDefaultTextColor(Color color)
@@ -335,7 +281,7 @@ public class DialogueManager : Singleton<DialogueManager>
             Debug.Log($"PlayCutScene called with: {cutSceneType}");
             if (Enum.TryParse(cutSceneType, true, out CutSceneManager.CutSceneType type))
             {
-                CutSceneEffectManager.PlayCutScene(type);
+                CutSceneManager.Instance?.PlayCutScene(type);
             }
             else
             {
@@ -345,17 +291,17 @@ public class DialogueManager : Singleton<DialogueManager>
         
         _story.BindExternalFunction("UpdateStatusRecoveryCount", (bool value) => {
             Debug.Log($"UpdateStatusRecoveryCount called with: {value}");
-            InkStatusManager?.UpdateStatusRecoveryCount(value);
+            InkStatusManager.Instance?.UpdateStatusRecoveryCount(value);
         });
 
         _story.BindExternalFunction("AddIntel", (int points) => {
             Debug.Log($"AddIntel called with: {points}");
-            InkStatusManager?.AddIntel(points);
+            InkStatusManager.Instance?.AddIntel(points);
         });
 
         _story.BindExternalFunction("AddCreativeFlagCount", () => {
             Debug.Log("AddCreativeFlagCount called");
-            InkStatusManager?.AddCreativeFlagCount();
+            InkStatusManager.Instance?.AddCreativeFlagCount();
         });
 
         _story.BindExternalFunction("TriggerStoryFlag", (string flag) => {
@@ -373,7 +319,7 @@ public class DialogueManager : Singleton<DialogueManager>
         });
 
         _story.BindExternalFunction("GetObjectiveState", () => {
-            return InkStatusManager?.GetObjectiveState();
+            return InkStatusManager.Instance?.GetObjectiveState();
         });
 
         _story.BindExternalFunction("SystemNotify", (string action) => {
@@ -413,7 +359,7 @@ public class DialogueManager : Singleton<DialogueManager>
             ProcessTags(_story.currentTags);
             
             yield return null;
-            yield return new WaitUntil(() => _cutSceneProcessing == false); // 대기 시간 적용 여부 확인
+            yield return new WaitUntil(() => _isEventPlaying == false); // 대기 시간 적용 여부 확인
 
             // 빈 문자열(엔터 등)일 경우 클릭 대기를 건너뛰고 바로 다음으로 진행
             if (string.IsNullOrEmpty(_processedText))
@@ -422,17 +368,11 @@ public class DialogueManager : Singleton<DialogueManager>
             }
 
             // 타이핑 시작
-            _typingCoroutine = StartCoroutine(TypeText(_processedText));
-
             // 타이핑이 끝날 때까지  대기
-            yield return _typingCoroutine;
-            _typingCoroutine = null;
+            yield return StartCoroutine(TypeText(_processedText));
 
-            _diagWaitingForAdvance = true;
-            _diagAdvanceRequested = false;
-            yield return new WaitUntil(() => _diagAdvanceRequested);
-            _diagWaitingForAdvance = false;
-            _diagAdvanceRequested = false;
+            _isWaitingForAdvance = true;
+            yield return new WaitUntil(() => !_isWaitingForAdvance);
         }
         
         // 선택지 표시
@@ -444,25 +384,49 @@ public class DialogueManager : Singleton<DialogueManager>
         }
     }
 
-    void skipLine(bool diagWaitingForAdvance)
+    void SkipLine()
     {
-        if (diagWaitingForAdvance)
+        if (_isTyping)
         {
-            _diagAdvanceRequested = true;
+            CompleteTypingText();
         }
-        else
+        else if (_isWaitingForAdvance)
         {
-            if (_typingCoroutine != null) _diagLineSkipFlag = true; // 타이핑 중이면 스킵 플래그 설정
+            _isWaitingForAdvance = false;
+
+            if (_pendingPopupAfterAdvance.HasValue)
+            {
+                ETutorialPopupType popupType = _pendingPopupAfterAdvance.Value;
+                _pendingPopupAfterAdvance = null;
+                _isEventPlaying = true;
+                TutorialPopupManager.Instance.ShowPopup(popupType, OnPopupClosed);
+            }
         }
+    }
+
+    private void CompleteTypingText()
+    {
+        TextMeshProUGUI target = TextBoxRouter.Instance.GetTextBox(_textBoxIndex);
+        if (target != null)
+        {
+            target.text = _processedText;
+        }
+
+        _isTyping = false;
+        _textBoxIndex = 0;
+        _nextTextColor = Color.clear;
     }
 
     IEnumerator TypeText(string text)
     {
+        _isTyping = true;
+
         //ITextBoxTarget target = TextBoxRouter.GetTextBox(_speakerIndex);
         TextMeshProUGUI target = TextBoxRouter.Instance.GetTextBox(_textBoxIndex);
         if (target == null)
         {
             Debug.LogError($"textBox {_textBoxIndex}에 등록된 텍스트박스가 없습니다.");
+            _isTyping = false;
             yield break;
         }
 
@@ -488,17 +452,12 @@ public class DialogueManager : Singleton<DialogueManager>
             target.text = tmpText;
             yield return new WaitForSeconds(_textSpeed);
 
-            if (_diagLineSkipFlag)
+            if (!_isTyping)
             {
-                _diagLineSkipFlag = false;
-                tmpText = text;
-                //target.UpdateBubble(tmpText);
-                target.text = tmpText;
-                _textBoxIndex = 0; // 스피커 인덱스 초기화
-                _nextTextColor = Color.clear;
                 yield break;
             }
         }
+        _isTyping = false;
         _textBoxIndex = 0; // 스피커 인덱스 초기화
         _nextTextColor = Color.clear; // 텍스트 색상 초기화
     }
@@ -551,6 +510,17 @@ public class DialogueManager : Singleton<DialogueManager>
                         break;
                 }
                 break;
+            case "popupAfter":
+                // 현재 대사를 출력한 뒤 다음 입력에서 팝업 표시
+                if (Enum.TryParse(value, true, out ETutorialPopupType popupAfterType))
+                {
+                    _pendingPopupAfterAdvance = popupAfterType;
+                }
+                else
+                {
+                    Debug.LogWarning($"알 수 없는 팝업 타입: {value}");
+                }
+                break;
             default:
                 Debug.LogWarning($"알 수 없는 태그: {key}:{value}");
                 break;
@@ -585,11 +555,17 @@ public class DialogueManager : Singleton<DialogueManager>
 
         choicesAvailable = _story.currentChoices.Count > 0;
     }
+
+    private void OnPopupClosed()
+    {
+        _isEventPlaying = false; // 다시 클릭으로 대사 진행 가능
+        
+        SkipLine();
+    }
     
     void OnChoiceSelected(int choiceIndex)
     {
-        _diagWaitingForAdvance = false;
-        _diagAdvanceRequested = false;
+        _isWaitingForAdvance = false;
         _story.ChooseChoiceIndex(choiceIndex);
         StartCoroutine(ContinueStory());
 
@@ -616,8 +592,7 @@ public class DialogueManager : Singleton<DialogueManager>
     
     public void JumpToKnot(string knotName)
     {
-        _diagWaitingForAdvance = false;
-        _diagAdvanceRequested = false;
+        _isWaitingForAdvance = false;
         _story.ChoosePathString(knotName);
         StartCoroutine(ContinueStory());
     }

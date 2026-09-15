@@ -66,6 +66,25 @@ public class CutSceneManager : MonoBehaviour
     }
     */
 
+    private static CutSceneManager _instance;
+
+    public static CutSceneManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindAnyObjectByType<CutSceneManager>();
+                if (_instance == null)
+                {
+                    Debug.Log("CutSceneManager가 씬에 없습니다. 새로 생성합니다.");
+                    _instance = new GameObject("CutSceneManager").AddComponent<CutSceneManager>();
+                }
+            }
+            return _instance;
+        }
+    }
+
     public ACutScene GetCutScene<T>() where T : ACutScene
     {
         string prefabAddress = typeof(T).Name switch

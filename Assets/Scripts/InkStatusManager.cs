@@ -20,6 +20,24 @@ public class InkStatusManager : MonoBehaviour
     public ObjectiveState CurrentObjectiveState => _currentObjectiveState;
     public string GetObjectiveState() => _currentObjectiveState.ToString().ToUpper();
 
+    private static InkStatusManager _instance;
+    public static InkStatusManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindAnyObjectByType<InkStatusManager>();
+                if (_instance == null)
+                {
+                    Debug.Log("InkStatusManager가 씬에 없습니다. 새로 생성합니다.");
+                    _instance = new GameObject("InkStatusManager").AddComponent<InkStatusManager>();
+                }
+            }
+            return _instance;
+        }
+    }
+
     public void UpdateStatusRecoveryCount(bool isGoodChoice) // 연속 선택제
     {
         // RED 상태에서는 아무것도 하지 않음 (조기 리턴)
