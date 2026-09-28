@@ -20,6 +20,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cc6514e01c7d65548873d386ae9efacf
+    m_Address: Assets/Prefabs/ChoiceButton.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ea9fd6467312ddf47adb22f34ef815d9
     m_Address: Assets/Prefabs/Fade Canvas.prefab
     m_ReadOnly: 0

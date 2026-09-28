@@ -9,6 +9,7 @@ using PrimeTween;
 
 public enum ETutorialPopupType
 {
+    FirstInterrogation,
     ImmedDetected,
     FlagCreatTrans,
 }
@@ -53,13 +54,26 @@ public class TutorialPopupManager : MonoBehaviour
 
     private Dictionary<ETutorialPopupType, string[]> _tutorialSentences = new Dictionary<ETutorialPopupType, string[]>
     {
-        { ETutorialPopupType.ImmedDetected, new string[] { "통역 내용이 의심받고 있습니다. 지금 당신에게는 한 번의 기회가 있습니다.",
-                                                           "사실대로 말하거나, 둘러대거나.",
-                                                           "단 — 이번 심문에서 다시 발각되면 그 순간이 마지막입니다" } },
-        { ETutorialPopupType.FlagCreatTrans, new string[] { "탐색에서 얻은 단서가 새로운 통역을 가능하게 합니다.",
-                                                            "이 통역은 포로에게 직접 전달되며, 심문관은 내용을 알 수 없습니다.",
-                                                            "단, 포로의 반응을 심문관이 눈치챌 수 있습니다. 그 때는 상황을 수습하십시오.", 
-                                                            "이 통역으로 인한 발각은 누적되지 않습니다." } },
+        { ETutorialPopupType.FirstInterrogation,
+        new string[] {  "당신은 지금 통역관입니다.",
+                        "수사관의 말을 <color=blue>발레스카어</color>로,\n포로의 말을 <color=red>오스텐어</color>로 옮깁니다.",
+                        "단 — 어떻게 옮기느냐는 당신이 결정합니다.",
+                        "직역 — 말 그대로 옮깁니다.\n가장 안전하지만 가장 단순합니다.",
+                        "의역 — 뉘앙스를 조정합니다.\n상황을 바꿀 수 있지만 책임이 따릅니다.",
+                        "창역 — 진실을 바꿉니다.\n강력하지만 들키면 모든 것을 잃습니다.",
+                        "모든 통역 내용은 수첩에 기록됩니다.",
+                        "수첩은 정기적으로 제출됩니다." } },
+        { ETutorialPopupType.ImmedDetected,
+        new string[] {  "창역이 발각됐습니다.",
+                        "수습할 기회가 한 번 있습니다.",
+                        "선택에 따라 결과가 달라집니다.",
+                        "같은 심문 내에서 두 번 발각되면",
+                        "수습 기회 없이 끝납니다." } },
+        { ETutorialPopupType.FlagCreatTrans,
+        new string[] {  "탐색에서 얻은 단서가 새로운 통역을 가능하게 합니다.",
+                        "이 통역은 포로에게 직접 전달되며, 심문관은 내용을 알 수 없습니다.",
+                        "단, 포로의 반응을 심문관이 눈치챌 수 있습니다. 그 때는 상황을 수습하십시오.", 
+                        "이 통역으로 인한 발각은 누적되지 않습니다." } },
     };
 
     public void ShowPopup(ETutorialPopupType type, Action onCloseCallback = null)
@@ -82,8 +96,8 @@ public class TutorialPopupManager : MonoBehaviour
             _currentSentenceIndex = 0;
             _onPopupCloseCallback = onCloseCallback;
 
-            InputManager.Instance.Input.Player.Click.performed += HandleClick; // 입력 이벤트 등록
-            InputManager.Instance.Input.Player.Interact.performed += HandleInteract; // 입력 이벤트 등록
+            InputManager.Input.Player.Click.performed += HandleClick; // 입력 이벤트 등록
+            InputManager.Input.Player.Interact.performed += HandleInteract; // 입력 이벤트 등록
 
             ShowNextSentence();
         });
@@ -91,12 +105,12 @@ public class TutorialPopupManager : MonoBehaviour
 
     private void HandleClick(InputAction.CallbackContext ctx)
     {
-        if (InputManager.Instance.IsPointerOverUIWhenClick()) return; // UI 위에서 클릭한 경우 대화 진행 방지
+        if (InputManager.IsPointerOverUIWhenClick()) return; // UI 위에서 클릭한 경우 대화 진행 방지
 
         if (_isTyping)
         {
             StopCoroutine(_typingCoroutine);
-            _popupText.text = _sentences[_currentSentenceIndex];
+            _popupText.maxVisibleCharacters = 99999; // 스킵 시 모든 글자 표시 (충분히 큰 수 할당)
             _isTyping = false;
         }
         else
@@ -113,7 +127,7 @@ public class TutorialPopupManager : MonoBehaviour
             if (_isTyping)
             {
                 StopCoroutine(_typingCoroutine);
-                _popupText.text = _sentences[_currentSentenceIndex];
+                _popupText.maxVisibleCharacters = 99999; // 스킵 시 모든 글자 표시 (충분히 큰 수 할당)
                 _isTyping = false;
             }
             else
@@ -137,20 +151,24 @@ public class TutorialPopupManager : MonoBehaviour
         {
             ClosePopup();
 
-            InputManager.Instance.Input.Player.Click.performed -= HandleClick; // 입력 이벤트 해제
-            InputManager.Instance.Input.Player.Interact.performed -= HandleInteract; // 입력 이벤트 해제
+            InputManager.Input.Player.Click.performed -= HandleClick; // 입력 이벤트 해제
+            InputManager.Input.Player.Interact.performed -= HandleInteract; // 입력 이벤트 해제
         }
     }
 
     private IEnumerator TypeSentence(string sentence)
     {
         _isTyping = true;
-        _popupText.text = "";
-        
-        // 한 글자씩 더해가며 출력
-        foreach (char letter in sentence.ToCharArray())
+        _popupText.text = sentence; // 텍스트 전체를 한 번에 할당
+        _popupText.ForceMeshUpdate(); // 텍스트 정보 업데이트를 강제하여 글자 수를 정확히 계산
+
+        // 실제 화면에 보이는 글자 수 (리치 텍스트 태그 제외)
+        int totalVisibleCharacters = _popupText.textInfo.characterCount;
+        _popupText.maxVisibleCharacters = 0; // 처음엔 아무것도 안 보이게 설정
+
+        for (int i = 0; i <= totalVisibleCharacters; i++)
         {
-            _popupText.text += letter;
+            _popupText.maxVisibleCharacters = i; // 한 글자씩 보이게 처리
             yield return new WaitForSeconds(_typingSpeed);
         }
         

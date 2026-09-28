@@ -49,10 +49,8 @@ VAR choice_005 = -1
 
 거부한다고 했는데 저 반응은 뭡니까. # speaker: 0 # language: Osten
 
-걸렸다. # speaker: 2
 ~PlaySFX("CLOCK_TICKING")
-
-~SystemNotify("CREATIVE_DETECTED")
+걸렸다. # speaker: 2 # popupAfter: FirstInterrogation
 
 * ["이름을 밝혔습니다. 예르코 드라간이라고 합니다. 전달 과정에서 오류가 있었습니다." # language: Osten]
     시작부터 거짓말이군요. # speaker: 0 # language: Osten

@@ -105,10 +105,7 @@ public class LoadingSceneController : MonoBehaviour
             FadeIn();
         //}
 
-        if (InputManager.Instance != null)
-        {
-            InputManager.Instance.Input.Disable(); // 로딩 씬에서는 플레이어 입력 비활성화
-        }
+        InputManager.Input.Disable(); // 로딩 씬에서는 플레이어 입력 비활성화
 
         //로컬 로딩
         AsyncOperation op = SceneManager.LoadSceneAsync(mLoadSceneName);
@@ -143,10 +140,7 @@ public class LoadingSceneController : MonoBehaviour
             //StartCoroutine(Fade(false));
             FadeOut();
 
-            if (InputManager.Instance != null)
-            {
-                InputManager.Instance.Input.Enable(); // 씬이 완전히 로드되면 플레이어 입력 활성화
-            }
+            InputManager.Input.Enable(); // 씬이 완전히 로드되면 플레이어 입력 활성화
 
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }

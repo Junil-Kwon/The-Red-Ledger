@@ -5,6 +5,7 @@ using Ink.Runtime;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using UnityEngine.AddressableAssets;
 using TMPro;
 using StoryFlags; // StoryFlag enum이 정의된 네임스페이스를 임포트
 
@@ -17,6 +18,7 @@ public class DialogueManager : Singleton<DialogueManager>
     
     [Header("Speaker UI Elements")]
     [SerializeField] private List<GameObject> _currentChoices = new List<GameObject>();
+    private string _choiceButtonPrefabPath = "Assets/Prefabs/ChoiceButton.prefab";
     //[SerializeField] private GameObject choiceButtonPrefab;
     //[SerializeField] private Transform choiceContainer;
 
@@ -35,20 +37,14 @@ public class DialogueManager : Singleton<DialogueManager>
 
     void OnEnable()
     {
-        if (InputManager.Instance != null)
-        {
-            InputManager.Instance.Input.Player.Click.performed += HandleClick;
-            InputManager.Instance.Input.Player.Interact.performed += HandleInteract;
-        }
+        InputManager.Input.Player.Click.performed += HandleClick;
+        InputManager.Input.Player.Interact.performed += HandleInteract;
     }
 
     void OnDisable()
     {
-        if (InputManager.Instance != null)
-        {
-            InputManager.Instance.Input.Player.Click.performed -= HandleClick;
-            InputManager.Instance.Input.Player.Interact.performed -= HandleInteract;
-        }
+        InputManager.Input.Player.Click.performed -= HandleClick;
+        InputManager.Input.Player.Interact.performed -= HandleInteract;
     }
 
     protected override void Awake()
@@ -77,7 +73,7 @@ public class DialogueManager : Singleton<DialogueManager>
     {
         //Debug.Log("HandleClick called");
 
-        if (InputManager.Instance.IsPointerOverUIWhenClick() || _isEventPlaying)
+        if (InputManager.IsPointerOverUIWhenClick() || _isEventPlaying)
             return; // UI 위에서 클릭한 경우 또는 이벤트 진행 중일 때 대화 진행 방지
 
         SkipLine();
@@ -372,11 +368,11 @@ public class DialogueManager : Singleton<DialogueManager>
             yield return StartCoroutine(TypeText(_processedText));
 
             _isWaitingForAdvance = true;
-            yield return new WaitUntil(() => !_isWaitingForAdvance);
+            yield return new WaitUntil(() => !_isWaitingForAdvance && !_isEventPlaying); // 대기 시간 적용 여부 확인
         }
         
         // 선택지 표시
-        DisplayChoices(out bool choicesAvailable);
+        bool choicesAvailable = DisplayChoices();
 
         if (!choicesAvailable)
         {
@@ -410,6 +406,8 @@ public class DialogueManager : Singleton<DialogueManager>
         if (target != null)
         {
             target.text = _processedText;
+            target.ForceMeshUpdate();
+            target.maxVisibleCharacters = target.textInfo.characterCount;
         }
 
         _isTyping = false;
@@ -431,8 +429,9 @@ public class DialogueManager : Singleton<DialogueManager>
         }
 
         //target.BubbleInit();
-        target.text = ""; // 말풍선 초기화
-        string tmpText = "";
+        target.text = text;
+        target.ForceMeshUpdate();
+        target.maxVisibleCharacters = 0;
         if (_nextTextColor == Color.clear) 
         {
             //target.SetTextColor(_defaultTextColor); // 기본 색상 설정
@@ -445,11 +444,10 @@ public class DialogueManager : Singleton<DialogueManager>
             _nextTextColor = Color.clear; // 텍스트 색상 초기화
         }
 
-        for (int i = 0; i < text.Length; i++)
+        int totalVisibleCharacters = target.textInfo.characterCount;
+        for (int i = 0; i <= totalVisibleCharacters; i++)
         {
-            tmpText += text[i];
-            //target.UpdateBubble(tmpText);
-            target.text = tmpText;
+            target.maxVisibleCharacters = i;
             yield return new WaitForSeconds(_textSpeed);
 
             if (!_isTyping)
@@ -527,10 +525,14 @@ public class DialogueManager : Singleton<DialogueManager>
         }
     }
     
-    void DisplayChoices(out bool choicesAvailable)
+    bool DisplayChoices()
     {
         //ClearChoices();
-        
+        if (!EnsureChoiceButtons(_story.currentChoices.Count))
+        {
+            return false;
+        }
+
         foreach (Choice choice in _story.currentChoices)
         {
             int choiceIndex = choice.index;
@@ -553,7 +555,30 @@ public class DialogueManager : Singleton<DialogueManager>
             _nextTextColor = Color.clear; // 선택지 색상 초기화
         }
 
-        choicesAvailable = _story.currentChoices.Count > 0;
+        return _story.currentChoices.Count > 0;
+    }
+
+    private bool EnsureChoiceButtons(int requiredCount)
+    {
+        GameObject choiceContainer = GameObject.Find("PlayerChoices");
+
+        if (choiceContainer == null)
+        {
+            Debug.LogError("PlayerChoices GameObject를 찾을 수 없습니다.");
+            return false;
+        }
+
+        // 현재 선택지 버튼 수가 부족하면 새로 생성
+        while (_currentChoices.Count < requiredCount)
+        {   
+            GameObject ChoiceButtonPrefab = Addressables.LoadAssetAsync<GameObject>(_choiceButtonPrefabPath).WaitForCompletion();
+            GameObject newChoiceButton = Instantiate(ChoiceButtonPrefab, choiceContainer.transform); // 새로 생성된 버튼
+            newChoiceButton.SetActive(false); // 초기에는 비활성화
+
+            _currentChoices.Add(newChoiceButton);
+        }
+
+        return true;
     }
 
     private void OnPopupClosed()

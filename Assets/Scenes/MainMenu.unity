@@ -4175,26 +4175,13 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 785425799}
-  - component: {fileID: 785425798}
   m_Layer: 0
   m_Name: TextBoxRouter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &785425798
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 785425797}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a2937215f60498e4ab26e28eebe91273, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TextBoxRouter
+  m_IsActive: 0
 --- !u!4 &785425799
 Transform:
   m_ObjectHideFlags: 0
@@ -6281,6 +6268,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 102789853e1b7d54092cd4caf263d5aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DataManager
+  currentSaveData:
+    _storyFlags: 
+    _chapterIndex: 0
+    _ddayIndex: 7
+  currentSettings:
+    _masterVolume: 1
+    _bgmVolume: 1
+    _sfxVolume: 1
 --- !u!4 &1517072617
 Transform:
   m_ObjectHideFlags: 0
@@ -7969,7 +7964,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2003796660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7982,9 +7977,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 527712f10b6ad784ba57c49c9efaadc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPopupManager
+  _outerBackground: {fileID: 0}
   _popupUI: {fileID: 0}
-  _popupText: {fileID: 0}
-  _typingSpeed: 0.05
 --- !u!4 &2003796661
 Transform:
   m_ObjectHideFlags: 0
@@ -8150,14 +8144,13 @@ GameObject:
   m_Component:
   - component: {fileID: 2068833642}
   - component: {fileID: 2068833641}
-  - component: {fileID: 2068833643}
   m_Layer: 0
   m_Name: InputManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2068833641
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8203,18 +8196,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2068833643
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2068833640}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c709327ad0296fe4f8f4d5ce29ea3ca8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerInputController
 --- !u!1 &2123654654
 GameObject:
   m_ObjectHideFlags: 0
