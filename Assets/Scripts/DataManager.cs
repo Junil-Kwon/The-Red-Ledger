@@ -74,9 +74,9 @@ public class GameSaveData
 
 public class DataManager : Singleton<DataManager>
 {
-    public GameSaveData currentSaveData {get; private set;} = null;
+    [SerializeField] private GameSaveData currentSaveData = null;
     //private int currentSaveSlot = 0; // 현재 선택된 세이브 슬롯
-    public GameSettings currentSettings {get; private set;} = new GameSettings();
+    [SerializeField] private GameSettings currentSettings = new GameSettings();
     // C:\Users\[user name]\AppData\LocalLow\[company name]\[product name]
     private string saveDataFolderPath => Path.Combine(Application.persistentDataPath, "SaveData");
     private string settingsFolderPath => Path.Combine(Application.persistentDataPath, "Settings");

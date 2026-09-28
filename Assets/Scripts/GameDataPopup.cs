@@ -57,7 +57,7 @@ public class GameDataPopup : MonoBehaviour
         }
         else
         {
-            DataManager.Instance.SaveGameData(DataManager.Instance.currentSaveData, slotIndex);
+            DataManager.Instance.SaveGameData(DataManager.Instance.CurrentSaveData, slotIndex);
             Debug.Log($"게임 데이터가 {slotIndex}번 슬롯에 저장되었습니다.");
             RefreshSlots(); // 저장 후 슬롯을 새로고침하여 변경 사항 반영
         }

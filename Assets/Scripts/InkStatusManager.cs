@@ -20,6 +20,14 @@ public class InkStatusManager : MonoBehaviour
     public ObjectiveState CurrentObjectiveState => _currentObjectiveState;
     public string GetObjectiveState() => _currentObjectiveState.ToString().ToUpper();
 
+    public static InkStatusManager Instance { get; private set; }
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    /*
     private static InkStatusManager _instance;
     public static InkStatusManager Instance
     {
@@ -28,15 +36,19 @@ public class InkStatusManager : MonoBehaviour
             if (_instance == null)
             {
                 _instance = FindAnyObjectByType<InkStatusManager>();
+                
                 if (_instance == null)
                 {
                     Debug.Log("InkStatusManager가 씬에 없습니다. 새로 생성합니다.");
                     _instance = new GameObject("InkStatusManager").AddComponent<InkStatusManager>();
                 }
+                
             }
+            
             return _instance;
         }
     }
+    */
 
     public void UpdateStatusRecoveryCount(bool isGoodChoice) // 연속 선택제
     {
@@ -77,6 +89,7 @@ public class InkStatusManager : MonoBehaviour
     public void AddIntel(int points)
     {
         _intelPoint += points;
+        Debug.Log($"Intel points increased by {points}. Total Intel points: {_intelPoint}");
     }
     public void AddCreativeFlagCount()
     {

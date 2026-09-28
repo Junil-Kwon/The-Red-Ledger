@@ -2,15 +2,29 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public class TextBoxRouter : Singleton<TextBoxRouter>
+public class TextBoxRouter
 {
+    private static TextBoxRouter _instance;
+    public static TextBoxRouter Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                Debug.Log("TextBoxRouter가 씬에 없습니다. 새로 생성합니다.");
+                _instance = new TextBoxRouter();
+            }
+            return _instance;
+        }
+    }
+
     //public static TextBoxRouter Instance { get; private set; }
 
     //private TextBoxLayer _baseLayer;
     private readonly List<TextBoxLayer> _layers = new(); // 아래(0)→위(끝) 순서, base 제외
 
     private TextBoxLayer TopLayer => _layers.Count > 0 ? _layers[_layers.Count - 1] : null;
-
+    /*
     protected override void Awake()
     {   
         /*
@@ -19,8 +33,9 @@ public class TextBoxRouter : Singleton<TextBoxRouter>
          _baseLayer = new TextBoxLayer("Base");
         */
 
-        base.Awake();
-    }
+        //base.Awake();
+    //}
+    
 
     /// 기본(항상 최하단) 레이어에 말풍선 등록
     /*
