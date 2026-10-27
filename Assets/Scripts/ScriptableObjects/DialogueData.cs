@@ -16,7 +16,7 @@ public struct Pair<TKey, TValue>
     }
 }
 
-[CreateAssetMenu(fileName = "New Dialogue Data", menuName = "Game Data/Dialogue Data")]
+[CreateAssetMenu(fileName = "NewDialogueData", menuName = "Scriptable Objects/Story/DialogueData")]
 public class DialogueData : ScriptableObject
 {
     [Header("Ink 데이터")]

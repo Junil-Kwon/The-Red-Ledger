@@ -26,6 +26,7 @@ public class DialogueManager : Singleton<DialogueManager>
     [SerializeField] private float _textSpeed = 0.05f;
 
     private int _textBoxIndex = 0;
+    private static readonly Color _baseTextColor = Color.black;
     private Color _defaultTextColor = Color.black;
     private Color _nextTextColor = Color.clear;
     private string _processedText;
@@ -35,16 +36,27 @@ public class DialogueManager : Singleton<DialogueManager>
 
     private bool _isEventPlaying = false; // 이벤트 진행 중인지 여부
 
+    private Coroutine _dialogueCoroutine;
+    public Action OnDialogueEnd; // 대화 종료 시 호출될 액션
+
     void OnEnable()
     {
-        InputManager.Input.Player.Click.performed += HandleClick;
-        InputManager.Input.Player.Interact.performed += HandleInteract;
+        /*
+        if (InputManager.Input != null)
+        {
+            InputManager.Input.Player.Click.performed += HandleClick;
+            InputManager.Input.Player.Interact.performed += HandleInteract;
+        }
+        */
     }
 
     void OnDisable()
     {
-        InputManager.Input.Player.Click.performed -= HandleClick;
-        InputManager.Input.Player.Interact.performed -= HandleInteract;
+        if (InputManager.Input != null)
+        {
+            InputManager.Input.Player.Click.performed -= HandleClick;
+            InputManager.Input.Player.Interact.performed -= HandleInteract;
+        }
     }
 
     protected override void Awake()
@@ -73,7 +85,7 @@ public class DialogueManager : Singleton<DialogueManager>
     {
         //Debug.Log("HandleClick called");
 
-        if (InputManager.IsPointerOverUIWhenClick() || _isEventPlaying)
+        if (InputManager.IsPointerOverUI() || _isEventPlaying)
             return; // UI 위에서 클릭한 경우 또는 이벤트 진행 중일 때 대화 진행 방지
 
         SkipLine();
@@ -190,16 +202,6 @@ public class DialogueManager : Singleton<DialogueManager>
         }
     }
 
-    public void SetEventPlaying(bool isPlaying)
-    {
-        _isEventPlaying = isPlaying;
-    }
-
-    public void SetDefaultTextColor(Color color)
-    {
-        _defaultTextColor = color;
-    }
-
     private void InitFields()
     {
         _textBoxIndex = 0;
@@ -274,15 +276,18 @@ public class DialogueManager : Singleton<DialogueManager>
         });
 
         _story.BindExternalFunction("PlayCutScene", (string cutSceneType) => {
-            Debug.Log($"PlayCutScene called with: {cutSceneType}");
-            if (Enum.TryParse(cutSceneType, true, out CutSceneManager.CutSceneType type))
+            if (!Enum.TryParse(cutSceneType, true, out CutSceneType type))
             {
-                CutSceneManager.Instance?.PlayCutScene(type);
+                Debug.LogError($"잘못된 컷씬 타입: {cutSceneType}");
+                return;
             }
-            else
-            {
-                Debug.LogError($"Ink에서 잘못된 컷씬 타입을 보냈습니다: {cutSceneType}");
-            }
+
+            _isEventPlaying = true;                         // 동기 시점에 즉시 잠금
+            CutSceneManager.Instance.PlayCutScene(type, cutScene => {
+                // 오버라이드가 있으면 그 색, 없으면(Hide 후 포함) 기본색으로 복원
+                _defaultTextColor = cutScene?.DialogueTextColor ?? _baseTextColor;
+                _isEventPlaying = false;
+            });
         });
         
         _story.BindExternalFunction("UpdateStatusRecoveryCount", (bool value) => {
@@ -317,19 +322,10 @@ public class DialogueManager : Singleton<DialogueManager>
         _story.BindExternalFunction("GetObjectiveState", () => {
             return InkStatusManager.Instance?.GetObjectiveState();
         });
-
-        _story.BindExternalFunction("SystemNotify", (string action) => {
-            Debug.Log($"SystemNotify called with: {action}");
-            /*
-            if (Enum.TryParse(action, true, out  ENotifyType notifyType))
-            {
-                //SystemNotifyManager.Instance.ShowNotification(notifyType);
-            }
-            else
-            {
-                Debug.LogError($"Ink에서 잘못된 시스템 알림 액션을 보냈습니다: {action}");
-            }
-            */
+        
+        _story.BindExternalFunction("SetNextDialogue", (string key) => {
+            Debug.Log($"다음 대화 키 지정: {key}");
+            //_pendingNextDialogueKey = key;
         });
     }
     
@@ -341,7 +337,13 @@ public class DialogueManager : Singleton<DialogueManager>
             return;
         }
         //_playerSpeechPanel.SetActive(true);
-        StartCoroutine(ContinueStory());
+        if (InputManager.Input != null)
+        {
+            InputManager.Input.Player.Click.performed += HandleClick;
+            InputManager.Input.Player.Interact.performed += HandleInteract;
+        }
+        
+        _dialogueCoroutine = StartCoroutine(ContinueStory());
     }
     
     IEnumerator ContinueStory()
@@ -604,15 +606,46 @@ public class DialogueManager : Singleton<DialogueManager>
             //Destroy(choice);
             choice.SetActive(false);
             choice.GetComponent<Button>().onClick.RemoveAllListeners();
-
         }
         //currentChoices.Clear();
-        
     }
     
-    void EndDialogue()
+    void EndDialogue(bool endedNormally = true)
     {
-        Debug.Log("대화 종료");
+        Debug.Log($"대화 종료 (콜백 호출: {endedNormally})");
+
+        if (InputManager.Input != null)
+        {
+            InputManager.Input.Player.Click.performed -= HandleClick;
+            InputManager.Input.Player.Interact.performed -= HandleInteract;
+        }
+        
+        if (endedNormally) 
+        {
+            // 대화 종료 시 통역 파트였다면 InkStatusManager를 유지
+            InkStatusManager instance = FindAnyObjectByType<InkStatusManager>();
+            if (instance != null) DontDestroyOnLoad(instance.gameObject);
+
+            OnDialogueEnd?.Invoke(); // 대화 종료 시 액션 호출
+        }
+        OnDialogueEnd = null; // 액션 초기화
+    }
+
+    // 외부에서 "지금 대화를 강제로 멈춰야 한다"고 판단될 때 호출하는 진입점
+    public void InterruptDialogue()
+    {
+        if (_dialogueCoroutine != null)
+            StopCoroutine(_dialogueCoroutine);
+        /*
+        if (_isTyping)
+            StopAllCoroutines(); // TypeText 등 하위 코루틴까지 정리하고 싶다면
+        */
+        _isTyping = false;
+        _isWaitingForAdvance = false;
+        _isEventPlaying = false;
+        ClearChoices();
+
+        EndDialogue(endedNormally: false); // 액션은 호출하지 않고 구독만 정리
     }
     
     public void JumpToKnot(string knotName)

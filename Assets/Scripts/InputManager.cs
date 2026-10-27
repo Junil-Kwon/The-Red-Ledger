@@ -16,10 +16,12 @@ public class InputManager
         get { EnsureInitialized(); return _input; }
     }
 
+    private static bool _isShutdown = false;
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void EnsureInitialized()
     {
-        if (_input != null) return;
+        if (_input != null || _isShutdown) return;
 
         _input = new PlayActions();
         _input.Player.Click.performed += PerformInteraction;
@@ -31,6 +33,7 @@ public class InputManager
     private static void Shutdown()
     {
         if (_input == null) return;
+        _isShutdown = true;
         _input.Player.Click.performed -= PerformInteraction;
         _input.Dispose();
         _input = null;
@@ -77,29 +80,32 @@ public class InputManager
         Debug.Log($"[InputManager] 액션 맵 전환 완료: {actionMap}");
     }
 
-    public static bool IsPointerOverUIWhenClick()
+    static readonly List<RaycastResult> s_results = new();
+    static PointerEventData s_eventData;
+
+    public static bool IsPointerOverUI()
     {
-        PointerEventData eventData = new PointerEventData(EventSystem.current);
-        eventData.position = _input.Player.Point.ReadValue<Vector2>();
+        s_eventData ??= new PointerEventData(EventSystem.current);
+        s_eventData.position = _input.Player.Point.ReadValue<Vector2>();
 
-        List<RaycastResult> results = new List<RaycastResult>();
-        EventSystem.current.RaycastAll(eventData, results);
-
-        foreach (var result in results)
+        s_results.Clear();
+        EventSystem.current.RaycastAll(s_eventData, s_results);
+        
+        foreach (var result in s_results) // 이미 앞에서부터 정렬됨
         {
-            if (result.gameObject.tag is not ("NoneFunctionalUI" or "DialogueTextBox"))
-            {
-                return true; // UI 위에 마우스가 있는 것
-            }
-        }
+            var go = result.gameObject;
+            if (go.CompareTag("NoneFunctionalUI") || go.CompareTag("DialogueTextBox"))
+                continue;
 
-        return false; // UI 위에 마우스가 없는 것 (월드 공간 클릭)
+            return true; // 처음 만난 "의미 있는" UI가 최상단 → 이것이 클릭을 받는다
+        }
+        return false;
     }
 
     // 월드 공간 클릭 시 상호작용 수행
     private static void PerformInteraction(InputAction.CallbackContext ctx)
     {
-        if (IsPointerOverUIWhenClick()) return; // UI 위에서 클릭한 경우 대화 진행 방지
+        if (IsPointerOverUI()) return; // UI 위에서 클릭한 경우 대화 진행 방지
 
         // 사용자가 월드 공간을 클릭함 -> 레이캐스트로 아이템 탐색
         Vector2 mousePosition = _input.Player.Point.ReadValue<Vector2>();

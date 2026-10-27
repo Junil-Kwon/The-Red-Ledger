@@ -11,39 +11,17 @@ public class TextBoxRouter
         {
             if (_instance == null)
             {
-                Debug.Log("TextBoxRouter가 씬에 없습니다. 새로 생성합니다.");
+                Debug.Log("TextBoxRouter 인스턴스가 없습니다. 새로 생성합니다.");
                 _instance = new TextBoxRouter();
             }
             return _instance;
         }
     }
 
-    //public static TextBoxRouter Instance { get; private set; }
-
-    //private TextBoxLayer _baseLayer;
     private readonly List<TextBoxLayer> _layers = new(); // 아래(0)→위(끝) 순서, base 제외
 
     private TextBoxLayer TopLayer => _layers.Count > 0 ? _layers[_layers.Count - 1] : null;
-    /*
-    protected override void Awake()
-    {   
-        /*
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
-         _baseLayer = new TextBoxLayer("Base");
-        */
 
-        //base.Awake();
-    //}
-    
-
-    /// 기본(항상 최하단) 레이어에 말풍선 등록
-    /*
-    public void RegisterTextBox(int index, ITextBoxTarget target)
-    {
-        _baseLayer.Set(index, target);
-    }
-    */
     public void RegisterTextBox(int index, TextMeshProUGUI target)
     {
         if (_layers.Count == 0) 
@@ -110,29 +88,6 @@ public class TextBoxRouter
 
         return isRemoved;
     }
-    /*
-    public ITextBoxTarget GetTextBox(int index)
-    {
-        /*
-        // 위에서부터(가장 최근에 push된 레이어부터) 탐색
-        for (int i = _layers.Count - 1; i >= 0; i--)
-        {
-            if (_layers[i].TryGet(index, out var t) && t != null && t.GameObject != null)
-                return t;
-        }
-        */
-        /*
-        foreach (var layer in _layers)
-        {
-            if (layer.TryGet(index, out var t) && t != null && t.GameObject != null)
-                return t;
-        }
-        if (_baseLayer.TryGet(index, out var baseTarget))
-            return baseTarget;
-
-        return null;
-    }
-    */
 
     public TextMeshProUGUI GetTextBox(int index)
     {

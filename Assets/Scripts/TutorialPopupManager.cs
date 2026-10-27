@@ -67,8 +67,7 @@ public class TutorialPopupManager : MonoBehaviour
         new string[] {  "창역이 발각됐습니다.",
                         "수습할 기회가 한 번 있습니다.",
                         "선택에 따라 결과가 달라집니다.",
-                        "같은 심문 내에서 두 번 발각되면",
-                        "수습 기회 없이 끝납니다." } },
+                        "같은 심문 내에서 두 번 발각되면 수습 기회 없이 끝납니다." } },
         { ETutorialPopupType.FlagCreatTrans,
         new string[] {  "탐색에서 얻은 단서가 새로운 통역을 가능하게 합니다.",
                         "이 통역은 포로에게 직접 전달되며, 심문관은 내용을 알 수 없습니다.",
@@ -95,7 +94,7 @@ public class TutorialPopupManager : MonoBehaviour
         {
             _currentSentenceIndex = 0;
             _onPopupCloseCallback = onCloseCallback;
-
+            
             InputManager.Input.Player.Click.performed += HandleClick; // 입력 이벤트 등록
             InputManager.Input.Player.Interact.performed += HandleInteract; // 입력 이벤트 등록
 
@@ -105,7 +104,7 @@ public class TutorialPopupManager : MonoBehaviour
 
     private void HandleClick(InputAction.CallbackContext ctx)
     {
-        if (InputManager.IsPointerOverUIWhenClick()) return; // UI 위에서 클릭한 경우 대화 진행 방지
+        if (InputManager.IsPointerOverUI()) return; // UI 위에서 클릭한 경우 대화 진행 방지
 
         if (_isTyping)
         {

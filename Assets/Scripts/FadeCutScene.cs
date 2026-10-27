@@ -1,6 +1,6 @@
 using PrimeTween;
+using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,38 +20,32 @@ public class FadeCutScene : ACutScene
 
     [SerializeField] private FadeConfig[] _modeConfigs = new FadeConfig[]
     {
-        new FadeConfig { isWhite = false, isFade = true, }, // Mode 0
+        new FadeConfig { isWhite = false, isFade = true, },   // Mode 0
         new FadeConfig { isWhite = false, isFade = false,  }, // Mode 1
-        new FadeConfig { isWhite = true,  isFade = true, }, // Mode 2
+        new FadeConfig { isWhite = true,  isFade = true, },   // Mode 2
         new FadeConfig { isWhite = true,  isFade = false,  }, // Mode 3
     };
+
+    private Color? _dialogueTextColor;
+    public override Color? DialogueTextColor => _dialogueTextColor;
 
     private TextBoxLayer _layer;
     private Sequence _fadeSequence;
 
-    public override void Show(int mode)
+    public override void Show(int mode, Action<ACutScene> onComplete = null)
     {
         FadeConfig config = _modeConfigs[mode];
+        _dialogueTextColor = config.isWhite ? Color.black : Color.white;
 
         if (_layer != null)
         {
             Debug.LogWarning("FadeCutScene is already active. Show() called again without Hide().");
+            onComplete?.Invoke(this);
             return;
         }
-        /*
-        DialogueManager dialogueManager = FindAnyObjectByType<DialogueManager>();
 
-        if (dialogueManager == null)
-        {
-            Debug.LogWarning("DialogueManager not found. Cut scene processing flag not set.");
-            return;
-        }
-        */
-
-        DialogueManager.Instance.SetDefaultTextColor(config.isWhite ? Color.black : Color.white); // 텍스트 색상 설정
         _backgroundImage.color = config.isWhite ? Color.white : Color.black;
         gameObject.SetActive(true);
-        DialogueManager.Instance.SetEventPlaying(true); // 이벤트 진행 중임을 알림
 
         _layer = TextBoxRouter.Instance.BeginLayer("FadeCutScene");
 
@@ -60,8 +54,6 @@ public class FadeCutScene : ACutScene
         int boxIndex = 0;
         foreach (var box in _textBoxes)
         {
-            //_layer.Set(speakerIndex, box.GetComponent<ITextBoxTarget>());
-            //_layer.Set(boxIndex, box.GetComponent<TextMeshProUGUI>());
             TextBoxRouter.Instance.RegisterTextBox(boxIndex, box.GetComponent<TextMeshProUGUI>());
             boxIndex++;
         }
@@ -72,10 +64,7 @@ public class FadeCutScene : ACutScene
             var seq = Sequence.Create();
             seq.Group(Tween.Alpha(GetComponent<CanvasGroup>(), 0f, 0f, Ease.Linear)); // 초기 알파값 설정
             seq.Group(Tween.Alpha(GetComponent<CanvasGroup>(), 1f, _fadeDuration, Ease.Linear));
-            seq.OnComplete(() =>
-            {
-                DialogueManager.Instance.SetEventPlaying(false); // 이벤트 진행 완료 알림
-            });
+            seq.OnComplete(() => onComplete?.Invoke(this)); // 페이드 인 완료 후 이벤트 진행 중임을 알림
             
             _fadeSequence = seq;
         }
@@ -83,31 +72,23 @@ public class FadeCutScene : ACutScene
         {
             // 즉시 표시일 때는 트윈 시스템을 전혀 쓰지 않음
             GetComponent<CanvasGroup>().alpha = 1f; 
-            DialogueManager.Instance.SetEventPlaying(false);
+            onComplete?.Invoke(this);
+
             _fadeSequence = default; // 또는 null 처리 (구조에 따라 지정)
         }
     }
 
-    public override void Hide(int mode)
+    public override void Hide(int mode, Action<ACutScene> onComplete = null)
     {
         FadeConfig config = _modeConfigs[mode];
+        _dialogueTextColor = null;   // 숨기면 오버라이드 해제
 
         if (_layer == null)
         {
             Debug.LogWarning("FadeCutScene is not active. Hide() called without Show().");
+            onComplete?.Invoke(this);
             return;
         }
-        /*
-        DialogueManager dialogueManager = FindAnyObjectByType<DialogueManager>();
-
-        if (dialogueManager == null)
-        {
-            Debug.LogWarning("DialogueManager not found. Cut scene processing flag not set.");
-            return;
-        }
-        */
-
-        DialogueManager.Instance.SetEventPlaying(true); // 이벤트 진행 중임을 알림
 
         _fadeSequence.Stop();
 
@@ -119,8 +100,7 @@ public class FadeCutScene : ACutScene
             seq.Group(Tween.Alpha(GetComponent<CanvasGroup>(), 0f, _fadeDuration, Ease.Linear));
             seq.OnComplete(() => {
                 gameObject.SetActive(false);
-                DialogueManager.Instance.SetEventPlaying(false);
-                DialogueManager.Instance.SetDefaultTextColor(Color.black); // 텍스트 색상 설정
+                onComplete?.Invoke(this);
             }); // 페이드 아웃 완료 후 비활성화
             
             _fadeSequence = seq;
@@ -130,11 +110,11 @@ public class FadeCutScene : ACutScene
             // 즉시 표시일 때는 트윈 시스템을 전혀 쓰지 않음
             GetComponent<CanvasGroup>().alpha = 0f;
             gameObject.SetActive(false);
-            DialogueManager.Instance.SetEventPlaying(false);
+            onComplete?.Invoke(this);
             _fadeSequence = default; // 또는 null 처리 (구조에 따라 지정)
         }
 
-        TextBoxRouter.Instance.RemoveLayer(_layer); // 모든 인덱스가 한 번에 원상복귀
+        TextBoxRouter.Instance?.RemoveLayer(_layer); // 모든 인덱스가 한 번에 원상복귀
         _layer = null;
     }
 
@@ -146,13 +126,6 @@ public class FadeCutScene : ACutScene
         {
             if (box != null)
             {
-                /*
-                var target = box.GetComponent<ITextBoxTarget>();
-                if (target != null)
-                {
-                    target.BubbleInit(); // 말풍선 초기화
-                }
-                */
                 var tmp = box.GetComponent<TextMeshProUGUI>();
                 if (tmp != null)
                 {
